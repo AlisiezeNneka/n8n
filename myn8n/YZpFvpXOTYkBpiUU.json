@@ -1,0 +1,1251 @@
+{
+  "active": false,
+  "connections": {
+    "Trigger: Manual Test Run": {
+      "main": [
+        [
+          {
+            "node": "Search Google Maps via Dumpling AI",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search Google Maps via Dumpling AI": {
+      "main": [
+        [
+          {
+            "node": "Split Places List for Processing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Places List for Processing": {
+      "main": [
+        [
+          {
+            "node": "Save Results to Google Sheet (Place Info)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "createdAt": "2025-04-15T17:15:04.311Z",
+  "id": "YZpFvpXOTYkBpiUU",
+  "isArchived": false,
+  "meta": null,
+  "name": "Extract Business Leads from Google Maps with Dumpling AI to Google Sheets",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "#### 🔍 Workflow Goal\nAutomatically search Google Maps using Dumpling AI based on a keyword (e.g., best restaurants in New York), extract results, and log them into a structured Google Sheet.\n\n## 🚀 Workflow Steps\n1. **Manual Trigger**\n   - Starts the workflow when testing manually.\n\n2. **Dumpling AI Google Search**\n   - Sends a POST request to Dumpling AI to search for locations on Google Maps based on your query.\n\n3. **Split Out Node**\n   - Breaks the `places[]` array into individual items so each result can be handled separately.\n\n4. **Google Sheets Node**\n   - Appends each place’s data (name, address, phone, website, rating, etc.) into a specific tab of your Google Sheets.\n\n##### 🧠 Notes\n- The search query is currently set to: `\"best+restaurants+in+New+York\"`\n- Output columns include rating, price level, website, phone, booking links, etc.\n- Each run consumes Dumpling AI credits per query.\n- You can customize search keywords or location in the HTTP Request body.\n\n#### ✅ Tip\nTo automate this regularly, change the trigger node to a **Schedule Trigger** and add dynamic query input using a **Set** or **Webhook** node.\n\n",
+        "height": 700,
+        "width": 600
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -660,
+        -200
+      ],
+      "id": "3a49e594-6c62-4128-825e-99cdfd7e6ed5",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        120
+      ],
+      "id": "0a4ee00a-19cf-4d1e-a145-b5c5619ce636",
+      "name": "Trigger: Manual Test Run"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://app.dumplingai.com/api/v1/search-maps",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"query\": \"best+restaurants+in+New+York\", \n  \"language\": \"en\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        220,
+        120
+      ],
+      "id": "26fdb640-93a0-4312-beaf-4c07fff87751",
+      "name": "Search Google Maps via Dumpling AI",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "xamyMqCpAech5BeT",
+          "name": "Header Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "places",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        440,
+        120
+      ],
+      "id": "d3fafc2c-0b9d-4e83-83aa-de24d11fc0e1",
+      "name": "Split Places List for Processing"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1pb4WLqv2EruLM1z9-utehcINolSj0vlUqZionyLoRUs",
+          "mode": "list",
+          "cachedResultName": "Places",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1pb4WLqv2EruLM1z9-utehcINolSj0vlUqZionyLoRUs/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1069765279,
+          "mode": "list",
+          "cachedResultName": "Google Maps",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1pb4WLqv2EruLM1z9-utehcINolSj0vlUqZionyLoRUs/edit#gid=1069765279"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Address": "={{ $json.address }}",
+            "rating": "={{ $json.rating }}",
+            "priceLevel": "={{ $json.priceLevel }}",
+            "type": "={{ $json.type }}",
+            "Booking Link": "={{ $json.bookingLinks[0] }}",
+            "Website": "={{ $json.website }}",
+            "Phone number": "={{ $json.phoneNumber }}",
+            "Position": "={{ $json.position }}",
+            "Name ": "={{ $json.title }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Name ",
+              "displayName": "Name ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Address",
+              "displayName": "Address",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "rating",
+              "displayName": "rating",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "priceLevel",
+              "displayName": "priceLevel",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "type",
+              "displayName": "type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "I use an HTTP request in n8n, I returned up to 10",
+              "displayName": "I use an HTTP request in n8n, I returned up to 10",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Booking Link",
+              "displayName": "Booking Link",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Website",
+              "displayName": "Website",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Phone number",
+              "displayName": "Phone number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Position",
+              "displayName": "Position",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        660,
+        120
+      ],
+      "id": "83b48532-b1fb-4ab3-9596-6e96526bfd49",
+      "name": "Save Results to Google Sheet (Place Info)",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "GaJqJHuS5mQxap7q",
+          "name": "Google Sheets account"
+        }
+      }
+    }
+  ],
+  "pinData": {
+    "Search Google Maps via Dumpling AI": [
+      {
+        "json": {
+          "searchParameters": {
+            "q": "best+restaurants+in+New+York",
+            "hl": "en",
+            "type": "maps",
+            "engine": "google"
+          },
+          "ll": "@40.7381076,-73.9928178,13z",
+          "places": [
+            {
+              "position": 1,
+              "title": "Boucherie West Village",
+              "address": "99 7th Ave S, New York, NY 10014",
+              "latitude": 40.733047,
+              "longitude": -74.0028772,
+              "rating": 4.7,
+              "ratingCount": 6138,
+              "priceLevel": "$50–100",
+              "type": "French restaurant",
+              "types": [
+                "French restaurant"
+              ],
+              "website": "https://www.boucherieus.com/",
+              "phoneNumber": "(212) 837-1616",
+              "description": "Two-floor bistro serving dry-aged steaks and other French fare, with a bar that's strong on absinthe.",
+              "openingHours": {
+                "Tuesday": "11 AM–12 AM",
+                "Wednesday": "11 AM–12 AM",
+                "Thursday": "11 AM–12 AM",
+                "Friday": "11 AM–12 AM",
+                "Saturday": "10 AM–12 AM",
+                "Sunday": "10 AM–12 AM",
+                "Monday": "11 AM–12 AM"
+              },
+              "bookingLinks": [
+                "https://www.opentable.com/restaurant/profile/346609?ref=1068",
+                "https://www.google.com/maps/reserve/v/dine/c/ECNC2O-BTkI?source=pa&opi=79508299"
+              ],
+              "thumbnailUrl": "https://lh3.googleusercontent.com/p/AF1QipOIjrjzX_gCxhEnqpn_1KwaVrrTIdgTOZv9FrJY",
+              "cid": "14366891226444778354",
+              "fid": "0x89c25993862d9fab:0xc76173738eeacb72",
+              "placeId": "ChIJq58thpNZwokRcsvqjnNzYcc"
+            },
+            {
+              "position": 2,
+              "title": "Balthazar",
+              "address": "80 Spring St, New York, NY 10012",
+              "latitude": 40.722668,
+              "longitude": -73.99822979999999,
+              "rating": 4.4,
+              "ratingCount": 7020,
+              "priceLevel": "$50–100",
+              "type": "French restaurant",
+              "types": [
+                "French restaurant",
+                "Bakery",
+                "Seafood restaurant"
+              ],
+              "website": "http://www.balthazarny.com/",
+              "phoneNumber": "(212) 965-1414",
+              "description": "Iconic French brasserie with steak frites, brunch & pastries in a classy space with red banquettes.",
+              "openingHours": {
+                "Tuesday": "8 AM–12 AM",
+                "Wednesday": "8 AM–12 AM",
+                "Thursday": "8 AM–12 AM",
+                "Friday": "8 AM–12 AM",
+                "Saturday": "9 AM–12 AM",
+                "Sunday": "9 AM–12 AM",
+                "Monday": "8 AM–12 AM"
+              },
+              "bookingLinks": [
+                "https://resy.com/cities/new-york-ny/venues/balthazar-nyc?rwg_token=AAiGsoaFc5Wv1TTL-PUVXIuvsKOdGTH7uz27wICtr-QZZbjYmtOgFXVt1boLwB31S7tdch1sPVym_QaoNS3VfiwZhmQrQOLWbA%3D%3D"
+              ],
+              "thumbnailUrl": "https://lh3.googleusercontent.com/p/AF1QipMPYp_acWrBa6fa2F0TsosyYI-wDt_rL9wFVcvC",
+              "cid": "13799948123386944265",
+              "fid": "0x89c259892cccb7b7:0xbf8343b3f54c1b09",
+              "placeId": "ChIJt7fMLIlZwokRCRtM9bNDg78"
+            },
+            {
+              "position": 3,
+              "title": "Gramercy Tavern",
+              "address": "42 E 20th St, New York, NY 10003",
+              "latitude": 40.7384555,
+              "longitude": -73.98850639999999,
+              "rating": 4.6,
+              "ratingCount": 4319,
+              "priceLevel": "$100+",
+              "type": "Restaurant",
+              "types": [
+                "Restaurant",
+                "American restaurant",
+                "Bar",
+                "Fine dining restaurant",
+                "Lunch restaurant",
+                "New American restaurant"
+              ],
+              "website": "http://www.gramercytavern.com/?utm_source=GoogleBusinessProfile&utm_medium=Website&utm_campaign=MapLabs",
+              "phoneNumber": "(212) 477-0777",
+              "description": "Danny Meyer's Flatiron District tavern with a fixed-price-only dining room & a bustling bar area.",
+              "openingHours": {
+                "Tuesday": "11:30 AM–10:30 PM",
+                "Wednesday": "11:30 AM–10:30 PM",
+                "Thursday": "11:30 AM–10:30 PM",
+                "Friday": "11:30 AM–10:30 PM",
+                "Saturday": "11:30 AM–10:30 PM",
+                "Sunday": "11:30 AM–10:30 PM",
+                "Monday": "11:30 AM–10:30 PM"
+              },
+              "thumbnailUrl": "https://lh3.googleusercontent.com/p/AF1QipP-6Q-5hmlzRWjc4E5FDa7K2OeNqJS3BxQMp_ln",
+              "cid": "3132777853886366741",
+              "fid": "0x89c259a1820824bd:0x2b79dcdc251b8415",
+              "placeId": "ChIJvSQIgqFZwokRFYQbJdzceSs"
+            },
+            {
+              "position": 4,
+              "title": "Le Bernardin",
+              "address": "155 W 51st St, New York, NY 10019",
+              "latitude": 40.7614218,
+              "longitude": -73.9817558,
+              "rating": 4.6,
+              "ratingCount": 3762,
+              "priceLevel": "$100+",
+              "type": "French restaurant",
+              "types": [
+                "French restaurant",
+                "Fine dining restaurant",
+                "Restaurant"
+              ],
+              "website": "https://www.le-bernardin.com/home",
+              "phoneNumber": "(212) 554-1515",
+              "description": "Elite French restaurant offers chef Eric Ripert's refined seafood, expert service & luxurious decor.",
+              "openingHours": {
+                "Tuesday": "12–2:30 PM, 5–10:30 PM",
+                "Wednesday": "12–2:30 PM, 5–10:30 PM",
+                "Thursday": "12–2:30 PM, 5–10:30 PM",
+                "Friday": "12–2:30 PM, 5–11 PM",
+                "Saturday": "5–11 PM",
+                "Sunday": "Closed",
+                "Monday": "12–2:30 PM, 5–10:30 PM"
+              },
+              "thumbnailUrl": "https://lh3.googleusercontent.com/p/AF1QipMC-dJ9gfcpFIX8PS-8yPYhjCMfjl6q35zAn1t8",
+              "cid": "7298340055988969067",
+              "fid": "0x89c25947ea10b457:0x6548e99cd73a1e6b",
+              "placeId": "ChIJV7QQ6kdZwokRax4615zpSGU"
+            },
+            {
+              "position": 5,
+              "title": "Boucherie Union Square",
+              "address": "225 Park Ave S, New York, NY 10003",
+              "latitude": 40.7372552,
+              "longitude": -73.9882246,
+              "rating": 4.7,
+              "ratingCount": 3890,
+              "priceLevel": "$50–100",
+              "type": "French restaurant",
+              "types": [
+                "French restaurant",
+                "Steak house"
+              ],
+              "website": "https://www.boucherieus.com/",
+              "phoneNumber": "(212) 353-0200",
+              "description": "Bistro for dry-aged steaks and other French fare, with a bar that's strong on absinthe.",
+              "openingHours": {
+                "Tuesday": "11 AM–12 AM",
+                "Wednesday": "11 AM–12 AM",
+                "Thursday": "11 AM–12 AM",
+                "Friday": "11 AM–12 AM",
+                "Saturday": "11 AM–12 AM",
+                "Sunday": "11 AM–12 AM",
+                "Monday": "11 AM–12 AM"
+              },
+              "bookingLinks": [
+                "https://www.opentable.com/restaurant/profile/1004143?ref=1068",
+                "https://www.google.com/maps/reserve/v/dine/c/4rmpVcuKUVY?source=pa&opi=79508299"
+              ],
+              "thumbnailUrl": "https://lh3.googleusercontent.com/p/AF1QipOa4JTlKpkY1_xlxnfahmd6H2FquTfCHzJJWto7",
+              "cid": "3442553861032018645",
+              "fid": "0x89c259a1ec5f5573:0x2fc6687f46f682d5",
+              "placeId": "ChIJc1Vf7KFZwokR1YL2Rn9oxi8"
+            },
+            {
+              "position": 6,
+              "title": "Piccola Cucina Osteria Siciliana",
+              "address": "196 Spring St, New York, NY 10012",
+              "latitude": 40.7250308,
+              "longitude": -74.0032774,
+              "rating": 4.6,
+              "ratingCount": 2199,
+              "priceLevel": "$30–50",
+              "type": "Italian restaurant",
+              "types": [
+                "Italian restaurant",
+                "Sicilian restaurant"
+              ],
+              "website": "http://www.piccolacucinagroup.com/",
+              "phoneNumber": "(646) 478-7488",
+              "description": "Simple Italian outpost serving salads & homestyle pastas along with an extensive wine list.",
+              "openingHours": {
+                "Tuesday": "11:30 AM–11 PM",
+                "Wednesday": "11:30 AM–11 PM",
+                "Thursday": "11:30 AM–11 PM",
+                "Friday": "11:30 AM–11 PM",
+                "Saturday": "11:30 AM–11 PM",
+                "Sunday": "11:30 AM–11 PM",
+                "Monday": "11:30 AM–11 PM"
+              },
+              "bookingLinks": [
+                "https://www.opentable.com/restaurant/profile/105838?ref=1068",
+                "https://www.google.com/maps/reserve/v/dine/c/Psao8Sv98GA?source=pa&opi=79508299"
+              ],
+              "thumbnailUrl": "https://lh3.googleusercontent.com/p/AF1QipMk3ppXOP_aW2Yrb-krDInf1tjUY6K8adRhg5XT",
+              "cid": "5472139628830047106",
+              "fid": "0x89c2598c596508a3:0x4bf0f1fff1c0bb82",
+              "placeId": "ChIJowhlWYxZwokRgrvA8f_x8Es"
+            },
+            {
+              "position": 7,
+              "title": "The Modern",
+              "address": "9 W 53rd St, New York, NY 10019",
+              "latitude": 40.761081,
+              "longitude": -73.976753,
+              "rating": 4.6,
+              "ratingCount": 2477,
+              "priceLevel": "$100+",
+              "type": "Restaurant",
+              "types": [
+                "Restaurant",
+                "American restaurant",
+                "Fine dining restaurant",
+                "French restaurant",
+                "Lunch restaurant",
+                "New American restaurant"
+              ],
+              "website": "https://www.themodernnyc.com/?utm_source=GoogleBusinessProfile&utm_medium=Website&utm_campaign=MapLabs",
+              "phoneNumber": "(212) 333-1220",
+              "description": "French/New American fare in a modernist space with garden views at the Museum of Modern Art.",
+              "openingHours": {
+                "Tuesday": "12–2 PM, 5:30–9 PM",
+                "Wednesday": "12–2 PM, 5:30–9 PM",
+                "Thursday": "12–2 PM, 5:30–9 PM",
+                "Friday": "12–2 PM, 5–9 PM",
+                "Saturday": "12–2 PM, 5–9 PM",
+                "Sunday": "12–2 PM",
+                "Monday": "12–2 PM, 5:30–9 PM"
+              },
+              "bookingLinks": [
+                "https://resy.com/cities/new-york-ny/venues/the-modern?rwg_token=AAiGsobdabLYAQWI0wKR3bXQzJR2xZTshjVp3Uxere391AzDkVal9-Ur8wUduvr_d8bjXUYgsQ2UBTV3fUaQ4cK8AL4sIDHf9g%3D%3D",
+                "https://www.google.com/maps/reserve/v/dine/c/IqhMF1j7prg?source=pa&opi=79508299"
+              ],
+              "thumbnailUrl": "https://lh3.googleusercontent.com/p/AF1QipPFegcqnHSeW_Ngyd9kDff_bofmJx6cA0Woh95o",
+              "cid": "12751425680490052044",
+              "fid": "0x89c258fbc4a06f31:0xb0f62a18b16739cc",
+              "placeId": "ChIJMW-gxPtYwokRzDlnsRgq9rA"
+            },
+            {
+              "position": 8,
+              "title": "Petite Boucherie",
+              "address": "First Floor, 14 Christopher St, New York, NY 10014",
+              "latitude": 40.733870599999996,
+              "longitude": -74.0004319,
+              "rating": 4.7,
+              "ratingCount": 1787,
+              "priceLevel": "$50–100",
+              "type": "French restaurant",
+              "types": [
+                "French restaurant"
+              ],
+              "website": "https://www.boucherieus.com/",
+              "phoneNumber": "(646) 756-4145",
+              "description": "Parisian-style cafe serving comforting French fare in a snug space with an open kitchen.",
+              "openingHours": {
+                "Tuesday": "11 AM–12 AM",
+                "Wednesday": "11 AM–12 AM",
+                "Thursday": "11 AM–12 AM",
+                "Friday": "11 AM–12 AM",
+                "Saturday": "10 AM–12 AM",
+                "Sunday": "10 AM–12 AM",
+                "Monday": "11 AM–12 AM"
+              },
+              "bookingLinks": [
+                "https://www.opentable.com/restaurant/profile/157048?ref=1068",
+                "https://www.google.com/maps/reserve/v/dine/c/E_LrlO_LqlY?source=pa&opi=79508299"
+              ],
+              "thumbnailUrl": "https://lh3.googleusercontent.com/p/AF1QipO9zp1up2rYreJpE-GCYOSwGAiFxyl_iQO2No91",
+              "cid": "12769026215543562150",
+              "fid": "0x89c259941967edc9:0xb134b1b0991fdfa6",
+              "placeId": "ChIJye1nGZRZwokRpt8fmbCxNLE"
+            },
+            {
+              "position": 9,
+              "title": "Manhatta",
+              "address": "28 Liberty St 60th floor, New York, NY 10005",
+              "latitude": 40.707997399999996,
+              "longitude": -74.00888259999999,
+              "rating": 4.7,
+              "ratingCount": 2764,
+              "priceLevel": "$100+",
+              "type": "Restaurant",
+              "types": [
+                "Restaurant",
+                "Bar",
+                "Cocktail bar",
+                "Event venue",
+                "Fine dining restaurant",
+                "New American restaurant",
+                "Wine bar"
+              ],
+              "website": "https://www.manhattarestaurant.com/?utm_source=GoogleBusinessProfile&utm_medium=Website&utm_campaign=MapLabs",
+              "phoneNumber": "(212) 230-5788",
+              "description": "Set on the 60th floor, this ritzy, high-end restaurant features New American cuisine and city views.",
+              "openingHours": {
+                "Tuesday": "11:30 AM–9:30 PM",
+                "Wednesday": "11:30 AM–9:30 PM",
+                "Thursday": "11:30 AM–9:30 PM",
+                "Friday": "11:30 AM–10:30 PM",
+                "Saturday": "11:30 AM–10:30 PM",
+                "Sunday": "11:30 AM–9:30 PM",
+                "Monday": "11:30 AM–9:30 PM"
+              },
+              "bookingLinks": [
+                "https://www.google.com/maps/reserve/v/dine/c/pyjjUZqJ9lQ?source=pa&opi=79508299"
+              ],
+              "thumbnailUrl": "https://lh3.googleusercontent.com/p/AF1QipObmWt-zmje4apfGS8o6xO7AQ2Y38KE_0Nzlo3L",
+              "cid": "6967162704871465124",
+              "fid": "0x89c25bc797d635a1:0x60b055910436a0a4",
+              "placeId": "ChIJoTXWl8dbwokRpKA2BJFVsGA"
+            },
+            {
+              "position": 10,
+              "title": "Russ & Daughters Cafe",
+              "address": "127 Orchard St, New York, NY 10002",
+              "latitude": 40.7196181,
+              "longitude": -73.9895779,
+              "rating": 4.6,
+              "ratingCount": 3319,
+              "priceLevel": "$20–30",
+              "type": "American restaurant",
+              "types": [
+                "American restaurant",
+                "Breakfast restaurant",
+                "Brunch restaurant",
+                "Jewish restaurant",
+                "Lunch restaurant",
+                "Restaurant"
+              ],
+              "website": "https://russanddaughterscafe.com/",
+              "phoneNumber": "(212) 475-4881",
+              "description": "From a legendary appetizing shop comes this retro, full-service outpost serving Jewish comfort food.",
+              "openingHours": {
+                "Tuesday": "8:30 AM–2:30 PM",
+                "Wednesday": "8:30 AM–2:30 PM",
+                "Thursday": "8:30 AM–2:30 PM",
+                "Friday": "8:30 AM–3:30 PM",
+                "Saturday": "8:30 AM–3:30 PM",
+                "Sunday": "8:30 AM–3:30 PM",
+                "Monday": "8:30 AM–2:30 PM"
+              },
+              "thumbnailUrl": "https://lh3.googleusercontent.com/p/AF1QipPCCdN4u4VxmoNVS3aFIXzgR3lvU2XOcmHf_our",
+              "cid": "8813431814842646952",
+              "fid": "0x89c25986daaa7ce7:0x7a4f998a3fd281a8",
+              "placeId": "ChIJ53yq2oZZwokRqIHSP4qZT3o"
+            },
+            {
+              "position": 11,
+              "title": "OLIO E PIÙ",
+              "address": "3 Greenwich Ave, New York, NY 10014",
+              "latitude": 40.7338208,
+              "longitude": -73.99979309999999,
+              "rating": 4.7,
+              "ratingCount": 8301,
+              "priceLevel": "$50–100",
+              "type": "Italian restaurant",
+              "types": [
+                "Italian restaurant",
+                "Restaurant"
+              ],
+              "website": "https://www.olioepiu.com/",
+              "phoneNumber": "(212) 243-6546",
+              "description": "Naples meets NYC at this trattoria with thin-crust pizza, Italian wines & ample sidewalk seating.",
+              "openingHours": {
+                "Tuesday": "11 AM–12 AM",
+                "Wednesday": "11 AM–12 AM",
+                "Thursday": "11 AM–12 AM",
+                "Friday": "11 AM–12 AM",
+                "Saturday": "10 AM–12 AM",
+                "Sunday": "10 AM–12 AM",
+                "Monday": "11 AM–12 AM"
+              },
+              "bookingLinks": [
+                "https://www.opentable.com/restaurant/profile/55837?ref=1068",
+                "https://www.google.com/maps/reserve/v/dine/c/2Ujk-qKjG0Y?source=pa&opi=79508299"
+              ],
+              "thumbnailUrl": "https://lh3.googleusercontent.com/p/AF1QipNdy8VOWBkFpkuFzY4WdZ0v7TRcquFXviC1hFyW",
+              "cid": "2975234135803511093",
+              "fid": "0x89c25996bd0915fd:0x294a27aedc2f4135",
+              "placeId": "ChIJ_RUJvZZZwokRNUEv3K4nSik"
+            },
+            {
+              "position": 12,
+              "title": "LOS TACOS No.1",
+              "address": "229 W 43rd St, New York, NY 10036",
+              "latitude": 40.757321399999995,
+              "longitude": -73.98765399999999,
+              "rating": 4.8,
+              "ratingCount": 12659,
+              "priceLevel": "$10–20",
+              "type": "Taco restaurant",
+              "types": [
+                "Taco restaurant",
+                "Mexican restaurant"
+              ],
+              "website": "http://www.lostacos1.com/",
+              "description": "Small pit stop with standing tables serving authentic Mexican street food.",
+              "openingHours": {
+                "Tuesday": "11 AM–11 PM",
+                "Wednesday": "11 AM–11 PM",
+                "Thursday": "11 AM–11 PM",
+                "Friday": "11 AM–11 PM",
+                "Saturday": "11 AM–11 PM",
+                "Sunday": "11 AM–9 PM",
+                "Monday": "11 AM–11 PM"
+              },
+              "thumbnailUrl": "https://lh3.googleusercontent.com/p/AF1QipPaLR3wTNi8SIIqvDFYGFJ-nG_sAiR6sZCOFqOZ",
+              "cid": "5618924015427954654",
+              "fid": "0x89c2585492286ae9:0x4dfa6d9f277ea7de",
+              "placeId": "ChIJ6WooklRYwokR3qd-J59t-k0"
+            },
+            {
+              "position": 13,
+              "title": "Via Carota",
+              "address": "51 Grove St, New York, NY 10014",
+              "latitude": 40.7331437,
+              "longitude": -74.0036671,
+              "rating": 4.4,
+              "ratingCount": 2842,
+              "priceLevel": "$50–100",
+              "type": "Italian restaurant",
+              "types": [
+                "Italian restaurant"
+              ],
+              "website": "http://viacarota.com/",
+              "phoneNumber": "(212) 255-1962",
+              "description": "Italian trattoria serving traditional plates & apéritifs in a rustic, cozy space.",
+              "openingHours": {
+                "Tuesday": "11 AM–11 PM",
+                "Wednesday": "11 AM–11 PM",
+                "Thursday": "11 AM–11 PM",
+                "Friday": "10 AM–11 PM",
+                "Saturday": "10 AM–11 PM",
+                "Sunday": "10 AM–11 PM",
+                "Monday": "11 AM–11 PM"
+              },
+              "thumbnailUrl": "https://lh3.googleusercontent.com/p/AF1QipOpMXlOGFvZovcoxb-XjqCV2kdYQHODTlpUbc8I",
+              "cid": "16472713729583313083",
+              "fid": "0x89c259937f4eb1af:0xe49ad5dc628370bb",
+              "placeId": "ChIJr7FOf5NZwokRu3CDYtzVmuQ"
+            },
+            {
+              "position": 14,
+              "title": "RH Rooftop Restaurant at RH New York",
+              "address": "9 9th Ave, New York, NY 10014",
+              "latitude": 40.73985,
+              "longitude": -74.00639,
+              "rating": 4.4,
+              "ratingCount": 2176,
+              "priceLevel": "$50–100",
+              "type": "American restaurant",
+              "types": [
+                "American restaurant",
+                "Restaurant"
+              ],
+              "website": "http://www.rh.com/newyork/restaurant",
+              "phoneNumber": "(212) 217-2210",
+              "description": "Glamorous rooftop restaurant offering American fare amid chandeliers, greenery, and skyline views.",
+              "openingHours": {
+                "Tuesday": "11:30 AM–9 PM",
+                "Wednesday": "11:30 AM–9 PM",
+                "Thursday": "11:30 AM–9 PM",
+                "Friday": "11:30 AM–9 PM",
+                "Saturday": "10 AM–9 PM",
+                "Sunday": "10 AM–9 PM",
+                "Monday": "11:30 AM–9 PM"
+              },
+              "bookingLinks": [
+                "https://www.opentable.com/restaurant/profile/1050247?ref=1068",
+                "https://www.google.com/maps/reserve/v/dine/c/YEEToh7bBlo?source=pa&opi=79508299"
+              ],
+              "thumbnailUrl": "https://lh3.googleusercontent.com/p/AF1QipNrIo_odwUa7D5xnOrEfdeOq7vGMprNLMPnyOhT",
+              "cid": "9312603855358623759",
+              "fid": "0x89c259f337272b95:0x813d03ddbc95800f",
+              "placeId": "ChIJlSsnN_NZwokRD4CVvN0DPYE"
+            },
+            {
+              "position": 15,
+              "title": "LOS TACOS No.1",
+              "address": "75 9th Ave, New York, NY 10011",
+              "latitude": 40.742252099999995,
+              "longitude": -74.0059635,
+              "rating": 4.7,
+              "ratingCount": 4772,
+              "priceLevel": "$10–20",
+              "type": "Taco restaurant",
+              "types": [
+                "Taco restaurant",
+                "Restaurant"
+              ],
+              "website": "https://www.lostacos1.com/",
+              "description": "Bustling taqueria serving tacos, quesadillas & aguas frescas in a street-style setup (no seating).",
+              "openingHours": {
+                "Tuesday": "11 AM–10 PM",
+                "Wednesday": "11 AM–10 PM",
+                "Thursday": "11 AM–10 PM",
+                "Friday": "11 AM–10 PM",
+                "Saturday": "11 AM–10 PM",
+                "Sunday": "11 AM–9 PM",
+                "Monday": "11 AM–10 PM"
+              },
+              "thumbnailUrl": "https://lh3.googleusercontent.com/p/AF1QipPqkAkh_eP9f-WUBiRoN-_nlyKVWCSTUp-47dpu",
+              "cid": "18303949408079626176",
+              "fid": "0x89c25b5ac3fc353f:0xfe04b102174ebfc0",
+              "placeId": "ChIJPzX8w1pbwokRwL9OFwKxBP4"
+            },
+            {
+              "position": 16,
+              "title": "Piccola Cucina Estiatorio",
+              "address": "75 Thompson St, New York, NY 10012",
+              "latitude": 40.7246336,
+              "longitude": -74.00297619999999,
+              "rating": 4.7,
+              "ratingCount": 1660,
+              "priceLevel": "$30–50",
+              "type": "Italian restaurant",
+              "types": [
+                "Italian restaurant",
+                "Seafood market"
+              ],
+              "website": "http://www.piccolacucinagroup.com/",
+              "phoneNumber": "(646) 781-9183",
+              "openingHours": {
+                "Tuesday": "11:30 AM–11 PM",
+                "Wednesday": "11:30 AM–11 PM",
+                "Thursday": "11:30 AM–11 PM",
+                "Friday": "11:30 AM–12 AM",
+                "Saturday": "11:30 AM–12 AM",
+                "Sunday": "11:30 AM–11 PM",
+                "Monday": "11:30 AM–11 PM"
+              },
+              "bookingLinks": [
+                "https://www.opentable.com/restaurant/profile/343939?ref=1068",
+                "https://www.google.com/maps/reserve/v/dine/c/pcvDAa-RKIU?source=pa&opi=79508299"
+              ],
+              "thumbnailUrl": "https://lh3.googleusercontent.com/p/AF1QipNoIV4fOazNCv4q04hA-CLCxMmuV9q3-ua81HR8",
+              "cid": "1412917795118885020",
+              "fid": "0x89c2598c5dde0695:0x139bb13faae3a89c",
+              "placeId": "ChIJlQbeXYxZwokRnKjjqj-xmxM"
+            },
+            {
+              "position": 17,
+              "title": "Per Se",
+              "address": "10 Columbus Cir, New York, NY 10019",
+              "latitude": 40.768217799999995,
+              "longitude": -73.9828988,
+              "rating": 4.5,
+              "ratingCount": 1863,
+              "priceLevel": "$100+",
+              "type": "Fine dining restaurant",
+              "types": [
+                "Fine dining restaurant",
+                "French restaurant"
+              ],
+              "website": "https://www.thomaskeller.com/perseny",
+              "phoneNumber": "(212) 823-9335",
+              "description": "Chef Thomas Keller's New American restaurant offers luxe fixed-price menus, with Central Park views.",
+              "openingHours": {
+                "Tuesday": "4:30–8:30 PM",
+                "Wednesday": "4:30–8:30 PM",
+                "Thursday": "4:30–8:30 PM",
+                "Friday": "4:30–8:30 PM",
+                "Saturday": "4:30–8:30 PM",
+                "Sunday": "4:30–8:30 PM",
+                "Monday": "4:30–8:30 PM"
+              },
+              "thumbnailUrl": "https://lh3.googleusercontent.com/p/AF1QipO7nQNiCyD5Fw4CUQ17RSfRfjX-pDQkD26wXJHy",
+              "cid": "6783566240304368229",
+              "fid": "0x89c258f62fec73a7:0x5e24118dffac8a65",
+              "placeId": "ChIJp3PsL_ZYwokRZYqs_40RJF4"
+            },
+            {
+              "position": 18,
+              "title": "ROBERT",
+              "address": "2 Columbus Cir, New York, NY 10019",
+              "latitude": 40.767438,
+              "longitude": -73.9819871,
+              "rating": 4.5,
+              "ratingCount": 1719,
+              "priceLevel": "$$$",
+              "type": "American restaurant",
+              "types": [
+                "American restaurant"
+              ],
+              "website": "https://robertnyc.com/",
+              "phoneNumber": "(212) 299-7730",
+              "description": "New American fare & city views in an arty space on the top-floor of the Museum of Arts & Design.",
+              "openingHours": {
+                "Tuesday": "12–10 PM",
+                "Wednesday": "12–10 PM",
+                "Thursday": "12–10 PM",
+                "Friday": "12–11 PM",
+                "Saturday": "11 AM–11 PM",
+                "Sunday": "11 AM–11 PM",
+                "Monday": "12–10 PM"
+              },
+              "bookingLinks": [
+                "https://www.opentable.com/r/robert-new-york"
+              ],
+              "thumbnailUrl": "https://lh3.googleusercontent.com/p/AF1QipMn17D7rwlR14fK8bCmgxV_UqzsK4fBzNP6fFaw",
+              "cid": "3538632692129109557",
+              "fid": "0x89c258f6339d1b6f:0x311bbfaf5cf09635",
+              "placeId": "ChIJbxudM_ZYwokRNZbwXK-_GzE"
+            },
+            {
+              "position": 19,
+              "title": "Katz's Delicatessen",
+              "address": "205 E Houston St, New York, NY 10002",
+              "latitude": 40.722232999999996,
+              "longitude": -73.98742899999999,
+              "rating": 4.5,
+              "ratingCount": 44962,
+              "priceLevel": "$20–30",
+              "type": "Restaurant",
+              "types": [
+                "Restaurant",
+                "American restaurant",
+                "Jewish restaurant",
+                "Deli",
+                "Sandwich shop"
+              ],
+              "website": "https://katzsdelicatessen.com/",
+              "phoneNumber": "(212) 254-2246",
+              "description": "No-frills deli with theatrically cranky service serving mile-high sandwiches since 1888.",
+              "openingHours": {
+                "Tuesday": "8 AM–11 PM",
+                "Wednesday": "8 AM–11 PM",
+                "Thursday": "8 AM–11 PM",
+                "Friday": "8 AM–11:30 PM",
+                "Saturday": "Open 24 hours",
+                "Sunday": "12 AM–11 PM",
+                "Monday": "8 AM–11 PM"
+              },
+              "thumbnailUrl": "https://lh3.googleusercontent.com/p/AF1QipNedb29MPPEqzCoheQ79l26VPnn6dcTGtcvF4w7",
+              "cid": "3545819340560108778",
+              "fid": "0x89c2598f7ff4aa09:0x313547e757cb8cea",
+              "placeId": "ChIJCar0f49ZwokR6ozLV-dHNTE"
+            },
+            {
+              "position": 20,
+              "title": "1803 NYC",
+              "address": "82 Reade St, New York, NY 10007",
+              "latitude": 40.7154539,
+              "longitude": -74.00733009999999,
+              "rating": 4.5,
+              "ratingCount": 1791,
+              "priceLevel": "$30–50",
+              "type": "Cajun restaurant",
+              "types": [
+                "Cajun restaurant",
+                "Bar",
+                "Brunch restaurant",
+                "Creole restaurant",
+                "Event venue",
+                "Live music venue",
+                "Lunch restaurant",
+                "Restaurant",
+                "Seafood restaurant",
+                "Soul food restaurant"
+              ],
+              "website": "https://1803nyc.com/",
+              "phoneNumber": "(212) 267-3000",
+              "description": "Elevated Cajun-Creole food and drinks served in a New Orleans's French quarters-inspired restaurant.",
+              "openingHours": {
+                "Tuesday": "11:30 AM–11 PM",
+                "Wednesday": "11:30 AM–11 PM",
+                "Thursday": "11:30 AM–11 PM",
+                "Friday": "11:30 AM–11 PM",
+                "Saturday": "11 AM–12 AM",
+                "Sunday": "11 AM–11 PM",
+                "Monday": "11:30 AM–11 PM"
+              },
+              "bookingLinks": [
+                "https://1803nyc.com/#reservation",
+                "https://resy.com/cities/new-york-ny/venues/1803?rwg_token=AAiGsoZQZUVMZ4dhDz6Sg9qsvG6tjLIhQZvXBSU9opEklGTc20X2Oby6LmmRgAp1IrhjAUd79G_k3s0VP3tEuEu5J_T1DCCazwmMhQpGVRyVaiJWH8RBrM0%3D",
+                "https://www.google.com/maps/reserve/v/dine/c/knKVX6xdexM?source=pa&opi=79508299"
+              ],
+              "thumbnailUrl": "https://lh3.googleusercontent.com/p/AF1QipMD6CTvhAgGtyrqyIkqwTB_iiJh1FKAdDcV_XKA",
+              "cid": "1614607817747620329",
+              "fid": "0x89c25a1f689722d3:0x16683d41746a61e9",
+              "placeId": "ChIJ0yKXaB9awokR6WFqdEE9aBY"
+            }
+          ],
+          "credits": 3
+        }
+      }
+    ],
+    "Save Results to Google Sheet (Place Info)": [
+      {
+        "json": {
+          "Address": "99 7th Ave S, New York, NY 10014",
+          "rating": 4.7,
+          "priceLevel": "$50–100",
+          "type": "French restaurant",
+          "Description": "Two-floor bistro serving dry-aged steaks and other French fare, with a bar that's strong on absinthe.",
+          "Booking Link": "https://www.opentable.com/restaurant/profile/346609?ref=1068",
+          "Website": "https://www.boucherieus.com/",
+          "Phone number": "(212) 837-1616",
+          "Position": 1,
+          "Name ": "Boucherie West Village"
+        }
+      },
+      {
+        "json": {
+          "Address": "80 Spring St, New York, NY 10012",
+          "rating": 4.4,
+          "priceLevel": "$50–100",
+          "type": "French restaurant",
+          "Description": "Iconic French brasserie with steak frites, brunch & pastries in a classy space with red banquettes.",
+          "Booking Link": "https://resy.com/cities/new-york-ny/venues/balthazar-nyc?rwg_token=AAiGsoaFc5Wv1TTL-PUVXIuvsKOdGTH7uz27wICtr-QZZbjYmtOgFXVt1boLwB31S7tdch1sPVym_QaoNS3VfiwZhmQrQOLWbA%3D%3D",
+          "Website": "http://www.balthazarny.com/",
+          "Phone number": "(212) 965-1414",
+          "Position": 2,
+          "Name ": "Balthazar"
+        }
+      },
+      {
+        "json": {
+          "Address": "42 E 20th St, New York, NY 10003",
+          "rating": 4.6,
+          "priceLevel": "$100+",
+          "type": "Restaurant",
+          "Description": "Danny Meyer's Flatiron District tavern with a fixed-price-only dining room & a bustling bar area.",
+          "Website": "http://www.gramercytavern.com/?utm_source=GoogleBusinessProfile&utm_medium=Website&utm_campaign=MapLabs",
+          "Phone number": "(212) 477-0777",
+          "Position": 3,
+          "Name ": "Gramercy Tavern"
+        }
+      },
+      {
+        "json": {
+          "Address": "155 W 51st St, New York, NY 10019",
+          "rating": 4.6,
+          "priceLevel": "$100+",
+          "type": "French restaurant",
+          "Description": "Elite French restaurant offers chef Eric Ripert's refined seafood, expert service & luxurious decor.",
+          "Website": "https://www.le-bernardin.com/home",
+          "Phone number": "(212) 554-1515",
+          "Position": 4,
+          "Name ": "Le Bernardin"
+        }
+      },
+      {
+        "json": {
+          "Address": "225 Park Ave S, New York, NY 10003",
+          "rating": 4.7,
+          "priceLevel": "$50–100",
+          "type": "French restaurant",
+          "Description": "Bistro for dry-aged steaks and other French fare, with a bar that's strong on absinthe.",
+          "Booking Link": "https://www.opentable.com/restaurant/profile/1004143?ref=1068",
+          "Website": "https://www.boucherieus.com/",
+          "Phone number": "(212) 353-0200",
+          "Position": 5,
+          "Name ": "Boucherie Union Square"
+        }
+      },
+      {
+        "json": {
+          "Address": "196 Spring St, New York, NY 10012",
+          "rating": 4.6,
+          "priceLevel": "$30–50",
+          "type": "Italian restaurant",
+          "Description": "Simple Italian outpost serving salads & homestyle pastas along with an extensive wine list.",
+          "Booking Link": "https://www.opentable.com/restaurant/profile/105838?ref=1068",
+          "Website": "http://www.piccolacucinagroup.com/",
+          "Phone number": "(646) 478-7488",
+          "Position": 6,
+          "Name ": "Piccola Cucina Osteria Siciliana"
+        }
+      },
+      {
+        "json": {
+          "Address": "9 W 53rd St, New York, NY 10019",
+          "rating": 4.6,
+          "priceLevel": "$100+",
+          "type": "Restaurant",
+          "Description": "French/New American fare in a modernist space with garden views at the Museum of Modern Art.",
+          "Booking Link": "https://resy.com/cities/new-york-ny/venues/the-modern?rwg_token=AAiGsobdabLYAQWI0wKR3bXQzJR2xZTshjVp3Uxere391AzDkVal9-Ur8wUduvr_d8bjXUYgsQ2UBTV3fUaQ4cK8AL4sIDHf9g%3D%3D",
+          "Website": "https://www.themodernnyc.com/?utm_source=GoogleBusinessProfile&utm_medium=Website&utm_campaign=MapLabs",
+          "Phone number": "(212) 333-1220",
+          "Position": 7,
+          "Name ": "The Modern"
+        }
+      },
+      {
+        "json": {
+          "Address": "First Floor, 14 Christopher St, New York, NY 10014",
+          "rating": 4.7,
+          "priceLevel": "$50–100",
+          "type": "French restaurant",
+          "Description": "Parisian-style cafe serving comforting French fare in a snug space with an open kitchen.",
+          "Booking Link": "https://www.opentable.com/restaurant/profile/157048?ref=1068",
+          "Website": "https://www.boucherieus.com/",
+          "Phone number": "(646) 756-4145",
+          "Position": 8,
+          "Name ": "Petite Boucherie"
+        }
+      },
+      {
+        "json": {
+          "Address": "28 Liberty St 60th floor, New York, NY 10005",
+          "rating": 4.7,
+          "priceLevel": "$100+",
+          "type": "Restaurant",
+          "Description": "Set on the 60th floor, this ritzy, high-end restaurant features New American cuisine and city views.",
+          "Booking Link": "https://www.google.com/maps/reserve/v/dine/c/pyjjUZqJ9lQ?source=pa&opi=79508299",
+          "Website": "https://www.manhattarestaurant.com/?utm_source=GoogleBusinessProfile&utm_medium=Website&utm_campaign=MapLabs",
+          "Phone number": "(212) 230-5788",
+          "Position": 9,
+          "Name ": "Manhatta"
+        }
+      },
+      {
+        "json": {
+          "Address": "127 Orchard St, New York, NY 10002",
+          "rating": 4.6,
+          "priceLevel": "$20–30",
+          "type": "American restaurant",
+          "Description": "From a legendary appetizing shop comes this retro, full-service outpost serving Jewish comfort food.",
+          "Website": "https://russanddaughterscafe.com/",
+          "Phone number": "(212) 475-4881",
+          "Position": 10,
+          "Name ": "Russ & Daughters Cafe"
+        }
+      },
+      {
+        "json": {
+          "Address": "3 Greenwich Ave, New York, NY 10014",
+          "rating": 4.7,
+          "priceLevel": "$50–100",
+          "type": "Italian restaurant",
+          "Description": "Naples meets NYC at this trattoria with thin-crust pizza, Italian wines & ample sidewalk seating.",
+          "Booking Link": "https://www.opentable.com/restaurant/profile/55837?ref=1068",
+          "Website": "https://www.olioepiu.com/",
+          "Phone number": "(212) 243-6546",
+          "Position": 11,
+          "Name ": "OLIO E PIÙ"
+        }
+      },
+      {
+        "json": {
+          "Address": "229 W 43rd St, New York, NY 10036",
+          "rating": 4.8,
+          "priceLevel": "$10–20",
+          "type": "Taco restaurant",
+          "Description": "Small pit stop with standing tables serving authentic Mexican street food.",
+          "Website": "http://www.lostacos1.com/",
+          "Position": 12,
+          "Name ": "LOS TACOS No.1"
+        }
+      },
+      {
+        "json": {
+          "Address": "51 Grove St, New York, NY 10014",
+          "rating": 4.4,
+          "priceLevel": "$50–100",
+          "type": "Italian restaurant",
+          "Description": "Italian trattoria serving traditional plates & apéritifs in a rustic, cozy space.",
+          "Website": "http://viacarota.com/",
+          "Phone number": "(212) 255-1962",
+          "Position": 13,
+          "Name ": "Via Carota"
+        }
+      },
+      {
+        "json": {
+          "Address": "9 9th Ave, New York, NY 10014",
+          "rating": 4.4,
+          "priceLevel": "$50–100",
+          "type": "American restaurant",
+          "Description": "Glamorous rooftop restaurant offering American fare amid chandeliers, greenery, and skyline views.",
+          "Booking Link": "https://www.opentable.com/restaurant/profile/1050247?ref=1068",
+          "Website": "http://www.rh.com/newyork/restaurant",
+          "Phone number": "(212) 217-2210",
+          "Position": 14,
+          "Name ": "RH Rooftop Restaurant at RH New York"
+        }
+      },
+      {
+        "json": {
+          "Address": "75 9th Ave, New York, NY 10011",
+          "rating": 4.7,
+          "priceLevel": "$10–20",
+          "type": "Taco restaurant",
+          "Description": "Bustling taqueria serving tacos, quesadillas & aguas frescas in a street-style setup (no seating).",
+          "Website": "https://www.lostacos1.com/",
+          "Position": 15,
+          "Name ": "LOS TACOS No.1"
+        }
+      },
+      {
+        "json": {
+          "Address": "75 Thompson St, New York, NY 10012",
+          "rating": 4.7,
+          "priceLevel": "$30–50",
+          "type": "Italian restaurant",
+          "Booking Link": "https://www.opentable.com/restaurant/profile/343939?ref=1068",
+          "Website": "http://www.piccolacucinagroup.com/",
+          "Phone number": "(646) 781-9183",
+          "Position": 16,
+          "Name ": "Piccola Cucina Estiatorio"
+        }
+      },
+      {
+        "json": {
+          "Address": "10 Columbus Cir, New York, NY 10019",
+          "rating": 4.5,
+          "priceLevel": "$100+",
+          "type": "Fine dining restaurant",
+          "Description": "Chef Thomas Keller's New American restaurant offers luxe fixed-price menus, with Central Park views.",
+          "Website": "https://www.thomaskeller.com/perseny",
+          "Phone number": "(212) 823-9335",
+          "Position": 17,
+          "Name ": "Per Se"
+        }
+      },
+      {
+        "json": {
+          "Address": "2 Columbus Cir, New York, NY 10019",
+          "rating": 4.5,
+          "priceLevel": "$$$",
+          "type": "American restaurant",
+          "Description": "New American fare & city views in an arty space on the top-floor of the Museum of Arts & Design.",
+          "Booking Link": "https://www.opentable.com/r/robert-new-york",
+          "Website": "https://robertnyc.com/",
+          "Phone number": "(212) 299-7730",
+          "Position": 18,
+          "Name ": "ROBERT"
+        }
+      },
+      {
+        "json": {
+          "Address": "205 E Houston St, New York, NY 10002",
+          "rating": 4.5,
+          "priceLevel": "$20–30",
+          "type": "Restaurant",
+          "Description": "No-frills deli with theatrically cranky service serving mile-high sandwiches since 1888.",
+          "Website": "https://katzsdelicatessen.com/",
+          "Phone number": "(212) 254-2246",
+          "Position": 19,
+          "Name ": "Katz's Delicatessen"
+        }
+      },
+      {
+        "json": {
+          "Address": "82 Reade St, New York, NY 10007",
+          "rating": 4.5,
+          "priceLevel": "$30–50",
+          "type": "Cajun restaurant",
+          "Description": "Elevated Cajun-Creole food and drinks served in a New Orleans's French quarters-inspired restaurant.",
+          "Booking Link": "https://1803nyc.com/#reservation",
+          "Website": "https://1803nyc.com/",
+          "Phone number": "(212) 267-3000",
+          "Position": 20,
+          "Name ": "1803 NYC"
+        }
+      }
+    ]
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [
+    {
+      "createdAt": "2025-04-15T17:02:00.249Z",
+      "updatedAt": "2025-04-15T17:02:00.249Z",
+      "id": "TlcNkmb96fUfZ2eA",
+      "name": "Tutorials"
+    }
+  ],
+  "triggerCount": 0,
+  "updatedAt": "2025-04-18T20:44:00.000Z",
+  "versionId": "171ef405-bac6-42c0-a3c3-c28cb49ff21a"
+}
