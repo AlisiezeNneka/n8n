@@ -1,0 +1,1344 @@
+{
+  "active": false,
+  "connections": {
+    "Google Sheets Trigger – New Business Added": {
+      "main": [
+        [
+          {
+            "node": "Fetch Google Reviews from Dumpling AI",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Google Reviews from Dumpling AI": {
+      "main": [
+        [
+          {
+            "node": "Split Out Reviews List",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out Reviews List": {
+      "main": [
+        [
+          {
+            "node": "Aggregate Review Text",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate Review Text": {
+      "main": [
+        [
+          {
+            "node": "GPT-4o: Extract Insights from Reviews",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GPT-4o: Extract Insights from Reviews": {
+      "main": [
+        [
+          {
+            "node": "Save Summary to Google Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "createdAt": "2025-05-03T11:46:14.401Z",
+  "id": "HsxXMUjX8ds5GXrV",
+  "isArchived": false,
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "name": "AI Competitor Review Analyzer with Dumpling AI + GPT-4o + Google Sheets",
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "documentId": {
+          "__rl": true,
+          "value": "1bRDFEMkwJ7BaAC6tO7xGrNFCB2MZKz9pWZAUja-Sels",
+          "mode": "list",
+          "cachedResultName": "Google review",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1bRDFEMkwJ7BaAC6tO7xGrNFCB2MZKz9pWZAUja-Sels/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1bRDFEMkwJ7BaAC6tO7xGrNFCB2MZKz9pWZAUja-Sels/edit#gid=0"
+        },
+        "event": "rowAdded",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTrigger",
+      "typeVersion": 1,
+      "position": [
+        -1320,
+        -700
+      ],
+      "id": "73954fe0-97bd-4556-9ea2-8d42bd5c7b3d",
+      "name": "Google Sheets Trigger – New Business Added",
+      "credentials": {
+        "googleSheetsTriggerOAuth2Api": {
+          "id": "qDzHSzTkclwDHpSR",
+          "name": "Google Sheets Trigger account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "=POST",
+        "url": "=https://app.dumplingai.com/api/v1/get-google-reviews",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"keyword\": \"{{ $json['Business name'] }}\",\n  \"reviews\": \"20\",\n  \"sortBy\": \"newest\",\n  \"language\": \"en\",\n  \"location\": \"United States\"\n}\n ",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -1060,
+        -700
+      ],
+      "id": "94d2b22c-522e-4a38-afd0-3dcd51f4418c",
+      "name": "Fetch Google Reviews from Dumpling AI",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "5CBvzXCLjwWzCJRE",
+          "name": "n8n_integration"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "items",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        -840,
+        -700
+      ],
+      "id": "26f0110a-0c92-48d9-a2a9-4e20f0e5699d",
+      "name": "Split Out Reviews List"
+    },
+    {
+      "parameters": {
+        "fieldsToAggregate": {
+          "fieldToAggregate": [
+            {
+              "fieldToAggregate": "review_text"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        -620,
+        -700
+      ],
+      "id": "e5c5c53b-42e2-4ad1-aeb4-9dd680747a1f",
+      "name": "Aggregate Review Text"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4o",
+          "mode": "list",
+          "cachedResultName": "GPT-4O"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "You are a review analysis assistant",
+              "role": "system"
+            },
+            {
+              "content": "=You are a review analysis assistant. Your task is to read a list of customer reviews about a business and extract two main insights:\n\n1. **Challenges or complaints** people are consistently mentioning  \n2. **Things customers love** or speak highly about\n\nPlease analyze the tone, keywords, and patterns in the reviews. Do not just summarize each review. Instead, group similar feedback together and present the top recurring themes.\n\nRespond in this format:\n\n**Top Complaints or Challenges:**\n- [Summarize the most common issues customers have. Include examples if needed.]\n\n**What People Love About This Business:**\n- [Summarize the most common compliments or positive feedback. Include examples if needed.]\n\nHere are the reviews:\n{{ $json.review_text }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        -420,
+        -700
+      ],
+      "id": "01bbc579-a368-45cd-b2c5-2204a562a4c7",
+      "name": "GPT-4o: Extract Insights from Reviews",
+      "credentials": {
+        "openAiApi": {
+          "id": "fdhWALG84tBLgSZT",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "1bRDFEMkwJ7BaAC6tO7xGrNFCB2MZKz9pWZAUja-Sels",
+          "mode": "list",
+          "cachedResultName": "Google review",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1bRDFEMkwJ7BaAC6tO7xGrNFCB2MZKz9pWZAUja-Sels/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1bRDFEMkwJ7BaAC6tO7xGrNFCB2MZKz9pWZAUja-Sels/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Business name": "={{ $('Fetch Google Reviews from Dumpling AI').item.json.keyword }}",
+            "Review  text": "={{ $json.message.content }}"
+          },
+          "matchingColumns": [
+            "Business name"
+          ],
+          "schema": [
+            {
+              "id": "Business name",
+              "displayName": "Business name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Review  text",
+              "displayName": "Review  text",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        -60,
+        -700
+      ],
+      "id": "e32aff5b-6ef0-4c2d-9c62-1aa0988a1ecd",
+      "name": "Save Summary to Google Sheets",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "GaJqJHuS5mQxap7q",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "### 🔍 AI Analysis & Sheet Output\n\nThis section handles summarizing reviews and saving insights:\n\n4. **Aggregate Review Text**  \n   Joins all individual review texts into a single prompt for AI processing.\n\n5. **GPT-4o – Summarize Sentiment**  \n   Uses GPT-4o to analyze the reviews and extract common complaints and positive feedback. Returns a structured summary.\n\n6. **Append Summary to Google Sheet**  \n   Adds the summarized competitor insight back into the original Google Sheet, aligned with the input row.\n",
+        "height": 360,
+        "width": 600
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -520,
+        -1180
+      ],
+      "typeVersion": 1,
+      "id": "b505cba7-6c9f-4b61-814d-3a0bb7d1219e",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "### 📥 Business Input & Review Collection\n\nThis section of the workflow starts the competitor analysis process:\n\n1. **Google Sheets Trigger**  \n   Watches for new rows added to the competitor sheet. Each row contains a business name and location.\n\n2. **Dumpling AI – Get Google Reviews**  \n   Sends a prompt to Dumpling AI with the business details to fetch 20 recent customer reviews. Requires an active agent with review scraping capability.\n\n3. **Split Reviews into Individual Items**  \n   Breaks the returned review list into individual entries so each one can be processed separately later in the flow.\n",
+        "height": 360,
+        "width": 580,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -1340,
+        -1180
+      ],
+      "typeVersion": 1,
+      "id": "7b35868d-1d2d-4c4b-a987-610d8868bed8",
+      "name": "Sticky Note1"
+    }
+  ],
+  "pinData": {
+    "Google Sheets Trigger – New Business Added": [
+      {
+        "json": {
+          "Business name": "schroederssf",
+          "Review  text": ""
+        }
+      }
+    ],
+    "Fetch Google Reviews from Dumpling AI": [
+      {
+        "json": {
+          "keyword": "schroederssf",
+          "type": "google_reviews",
+          "se_domain": "google.com",
+          "location_code": 2840,
+          "language_code": "en",
+          "check_url": "https://www.google.com/search?q=schroederssf&num=100&sort=newestFirst&hl=en&gl=US&gws_rd=cr&ie=UTF-8&oe=UTF-8&uule=w+CAIQIFISCQs2MuSEtepUEUK33kOSuTsc",
+          "datetime": "2025-05-03 13:12:25 +00:00",
+          "title": "Schroeder's",
+          "sub_title": "240 Front St, San Francisco, CA 94111, United States",
+          "rating": {
+            "rating_type": "Max5",
+            "value": 4.2,
+            "votes_count": 1218,
+            "rating_max": 5
+          },
+          "feature_id": "0x80858061a032437b:0x68f20c78506cc026",
+          "place_id": "ChIJe0MyoGGAhYARJsBsUHgM8mg",
+          "cid": "7562120435193397286",
+          "reviews_count": 1218,
+          "items_count": 20,
+          "items": [
+            {
+              "type": "google_reviews_search",
+              "rank_group": 1,
+              "rank_absolute": 1,
+              "position": "left",
+              "xpath": null,
+              "review_text": "Delicious sausage boards and pretzels. Great atmosphere — especially for a game or large group",
+              "original_review_text": null,
+              "time_ago": "3 weeks ago",
+              "timestamp": "2025-04-12 02:23:15 +00:00",
+              "rating": {
+                "rating_type": "Max5",
+                "value": 5,
+                "votes_count": null,
+                "rating_max": 5
+              },
+              "reviews_count": 142,
+              "photos_count": 1,
+              "local_guide": true,
+              "profile_name": "Lone Stride",
+              "profile_url": "https://www.google.com/maps/contrib/109457473948114437861/reviews?hl=en-US",
+              "review_url": "https://www.google.com/maps/reviews/data=!4m8!14m7!1m6!2m5!1sChZDSUhNMG9nS0VJQ0FnTURJamFhZkV3EAE!2m1!1s0x0:0x68f20c78506cc026!3m1!1s2@1:CIHM0ogKEICAgMDIjaafEw%7CCgsIk53nvwYQ6I2XSw%7C?hl=en-US",
+              "profile_image_url": "https://lh3.googleusercontent.com/a/ACg8ocIoSfHWk16Fs10CUsF3QaYNYU2VpzmaPofR1xjMZ1MO_qfgOg=s64-c-rp-mo-ba4-br100",
+              "owner_answer": null,
+              "original_owner_answer": null,
+              "owner_time_ago": null,
+              "owner_timestamp": null,
+              "review_id": "ChZDSUhNMG9nS0VJQ0FnTURJamFhZkV3EAE",
+              "images": null,
+              "review_highlights": [
+                {
+                  "feature": "Price per person",
+                  "assessment": "$30–50"
+                },
+                {
+                  "feature": "Food",
+                  "assessment": "5"
+                },
+                {
+                  "feature": "Service",
+                  "assessment": "5"
+                },
+                {
+                  "feature": "Atmosphere",
+                  "assessment": "5"
+                }
+              ]
+            },
+            {
+              "type": "google_reviews_search",
+              "rank_group": 2,
+              "rank_absolute": 2,
+              "position": "left",
+              "xpath": null,
+              "review_text": "Quality German food, friendly staff",
+              "original_review_text": null,
+              "time_ago": "4 weeks ago",
+              "timestamp": "2025-04-04 06:35:17 +00:00",
+              "rating": {
+                "rating_type": "Max5",
+                "value": 5,
+                "votes_count": null,
+                "rating_max": 5
+              },
+              "reviews_count": 269,
+              "photos_count": null,
+              "local_guide": true,
+              "profile_name": "Ryan Kuo",
+              "profile_url": "https://www.google.com/maps/contrib/112065824844515183111/reviews?hl=en-US",
+              "review_url": "https://www.google.com/maps/reviews/data=!4m8!14m7!1m6!2m5!1sChdDSUhNMG9nS0VJQ0FnTUNJX2JLRG9nRRAB!2m1!1s0x0:0x68f20c78506cc026!3m1!1s2@1:CIHM0ogKEICAgMCI_bKDogE%7CCgsIpfu9vwYQqNrHcQ%7C?hl=en-US",
+              "profile_image_url": "https://lh3.googleusercontent.com/a-/ALV-UjV6JShJquC8OULNcyk16_BjzrfCy6hlkGG3L5vw1DWs1YemdXxS=s64-c-rp-mo-ba4-br100",
+              "owner_answer": null,
+              "original_owner_answer": null,
+              "owner_time_ago": null,
+              "owner_timestamp": null,
+              "review_id": "ChdDSUhNMG9nS0VJQ0FnTUNJX2JLRG9nRRAB",
+              "images": null,
+              "review_highlights": null
+            },
+            {
+              "type": "google_reviews_search",
+              "rank_group": 3,
+              "rank_absolute": 3,
+              "position": "left",
+              "xpath": null,
+              "review_text": null,
+              "original_review_text": null,
+              "time_ago": "a month ago",
+              "timestamp": "2025-03-30 04:15:08 +00:00",
+              "rating": {
+                "rating_type": "Max5",
+                "value": 4,
+                "votes_count": null,
+                "rating_max": 5
+              },
+              "reviews_count": 16,
+              "photos_count": 9,
+              "local_guide": true,
+              "profile_name": "Greg Meagher",
+              "profile_url": "https://www.google.com/maps/contrib/105961603236208078077/reviews?hl=en-US",
+              "review_url": "https://www.google.com/maps/reviews/data=!4m8!14m7!1m6!2m5!1sChZDSUhNMG9nS0VJQ0FnSURSNzhTOE1BEAE!2m1!1s0x0:0x68f20c78506cc026!3m1!1s2@1:CIHM0ogKEICAgIDR78S8MA%7CCgsIzIqjvwYQ8LfKEA%7C?hl=en-US",
+              "profile_image_url": "https://lh3.googleusercontent.com/a/ACg8ocL7PuJwQWJ65Q7bdtoeSfU6cZYv5GeTILHI1mTMXALj3zvuOdo=s64-c-rp-mo-ba2-br100",
+              "owner_answer": null,
+              "original_owner_answer": null,
+              "owner_time_ago": null,
+              "owner_timestamp": null,
+              "review_id": "ChZDSUhNMG9nS0VJQ0FnSURSNzhTOE1BEAE",
+              "images": null,
+              "review_highlights": [
+                {
+                  "feature": "Service",
+                  "assessment": "Dine in\n5"
+                },
+                {
+                  "feature": "Meal type",
+                  "assessment": "Other"
+                },
+                {
+                  "feature": "Food",
+                  "assessment": "4"
+                },
+                {
+                  "feature": "Atmosphere",
+                  "assessment": "5"
+                }
+              ]
+            },
+            {
+              "type": "google_reviews_search",
+              "rank_group": 4,
+              "rank_absolute": 4,
+              "position": "left",
+              "xpath": null,
+              "review_text": null,
+              "original_review_text": null,
+              "time_ago": "a month ago",
+              "timestamp": "2025-03-23 00:49:01 +00:00",
+              "rating": {
+                "rating_type": "Max5",
+                "value": 5,
+                "votes_count": null,
+                "rating_max": 5
+              },
+              "reviews_count": 9,
+              "photos_count": null,
+              "local_guide": true,
+              "profile_name": "Ciaron Ireland",
+              "profile_url": "https://www.google.com/maps/contrib/100530869924006791492/reviews?hl=en-US",
+              "review_url": "https://www.google.com/maps/reviews/data=!4m8!14m7!1m6!2m5!1sChdDSUhNMG9nS0VJQ0FnTUR3aU9qN193RRAB!2m1!1s0x0:0x68f20c78506cc026!3m1!1s2@1:CIHM0ogKEICAgMDwiOj7_wE%7CCgwI_bT9vgYQ0PX9wgI%7C?hl=en-US",
+              "profile_image_url": "https://lh3.googleusercontent.com/a-/ALV-UjWhr4b95XNv8YbjM4KX3P-H6RUV-EVFn8Z9Pqsfp5b4Nktw8pl9=s64-c-rp-mo-ba3-br100",
+              "owner_answer": null,
+              "original_owner_answer": null,
+              "owner_time_ago": null,
+              "owner_timestamp": null,
+              "review_id": "ChdDSUhNMG9nS0VJQ0FnTUR3aU9qN193RRAB",
+              "images": null,
+              "review_highlights": [
+                {
+                  "feature": "Service",
+                  "assessment": "Dine in\n5"
+                },
+                {
+                  "feature": "Meal type",
+                  "assessment": "Dinner"
+                },
+                {
+                  "feature": "Price per person",
+                  "assessment": "$50–100"
+                },
+                {
+                  "feature": "Food",
+                  "assessment": "5"
+                },
+                {
+                  "feature": "Atmosphere",
+                  "assessment": "4"
+                }
+              ]
+            },
+            {
+              "type": "google_reviews_search",
+              "rank_group": 5,
+              "rank_absolute": 5,
+              "position": "left",
+              "xpath": null,
+              "review_text": "There for gathering, great ambiance, medieval style vibes, especially the tables",
+              "original_review_text": null,
+              "time_ago": "a month ago",
+              "timestamp": "2025-03-21 17:35:06 +00:00",
+              "rating": {
+                "rating_type": "Max5",
+                "value": 5,
+                "votes_count": null,
+                "rating_max": 5
+              },
+              "reviews_count": 71,
+              "photos_count": 100,
+              "local_guide": true,
+              "profile_name": "구스만보라",
+              "profile_url": "https://www.google.com/maps/contrib/115901291912151198982/reviews?hl=en-US",
+              "review_url": "https://www.google.com/maps/reviews/data=!4m8!14m7!1m6!2m5!1sChdDSUhNMG9nS0VJQ0FnTUN3cDktSzR3RRAB!2m1!1s0x0:0x68f20c78506cc026!3m1!1s2@1:CIHM0ogKEICAgMCwp9-K4wE%7CCgwIysb2vgYQ8LD92AM%7C?hl=en-US",
+              "profile_image_url": "https://lh3.googleusercontent.com/a-/ALV-UjUp2le51xagQoPNZGmNfPsW5OGDq7o-eRKyytnPG2QKlPn3gsBMNA=s64-c-rp-mo-ba4-br100",
+              "owner_answer": null,
+              "original_owner_answer": null,
+              "owner_time_ago": null,
+              "owner_timestamp": null,
+              "review_id": "ChdDSUhNMG9nS0VJQ0FnTUN3cDktSzR3RRAB",
+              "images": null,
+              "review_highlights": [
+                {
+                  "feature": "Meal type",
+                  "assessment": "Dinner"
+                },
+                {
+                  "feature": "Food",
+                  "assessment": "5"
+                },
+                {
+                  "feature": "Service",
+                  "assessment": "5"
+                },
+                {
+                  "feature": "Atmosphere",
+                  "assessment": "5"
+                }
+              ]
+            },
+            {
+              "type": "google_reviews_search",
+              "rank_group": 6,
+              "rank_absolute": 6,
+              "position": "left",
+              "xpath": null,
+              "review_text": "Fried chicken was oozing oil when I tried to cut it",
+              "original_review_text": null,
+              "time_ago": "a month ago",
+              "timestamp": "2025-03-21 04:31:37 +00:00",
+              "rating": {
+                "rating_type": "Max5",
+                "value": 1,
+                "votes_count": null,
+                "rating_max": 5
+              },
+              "reviews_count": 135,
+              "photos_count": 93,
+              "local_guide": true,
+              "profile_name": "Ajay Kumar K",
+              "profile_url": "https://www.google.com/maps/contrib/101321122607001875391/reviews?hl=en-US",
+              "review_url": "https://www.google.com/maps/reviews/data=!4m8!14m7!1m6!2m5!1sChdDSUhNMG9nS0VJQ0FnTUN3ODh2YXlRRRAB!2m1!1s0x0:0x68f20c78506cc026!3m1!1s2@1:CIHM0ogKEICAgMCw88vayQE%7CCgwIqdfzvgYQoICHiQI%7C?hl=en-US",
+              "profile_image_url": "https://lh3.googleusercontent.com/a-/ALV-UjWpfKPiUiNOlyZ9WNW_lajQClQydWOG_DMKAVTKtVUMKDCNFaJP=s64-c-rp-mo-ba4-br100",
+              "owner_answer": null,
+              "original_owner_answer": null,
+              "owner_time_ago": null,
+              "owner_timestamp": null,
+              "review_id": "ChdDSUhNMG9nS0VJQ0FnTUN3ODh2YXlRRRAB",
+              "images": null,
+              "review_highlights": [
+                {
+                  "feature": "Service",
+                  "assessment": "Dine in\n5"
+                },
+                {
+                  "feature": "Meal type",
+                  "assessment": "Dinner"
+                },
+                {
+                  "feature": "Price per person",
+                  "assessment": "$10–20"
+                },
+                {
+                  "feature": "Food",
+                  "assessment": "1"
+                },
+                {
+                  "feature": "Atmosphere",
+                  "assessment": "5"
+                }
+              ]
+            },
+            {
+              "type": "google_reviews_search",
+              "rank_group": 7,
+              "rank_absolute": 7,
+              "position": "left",
+              "xpath": null,
+              "review_text": "Expensively decent.",
+              "original_review_text": null,
+              "time_ago": "a month ago",
+              "timestamp": "2025-03-14 07:00:37 +00:00",
+              "rating": {
+                "rating_type": "Max5",
+                "value": 4,
+                "votes_count": null,
+                "rating_max": 5
+              },
+              "reviews_count": 19,
+              "photos_count": null,
+              "local_guide": true,
+              "profile_name": "Jake",
+              "profile_url": "https://www.google.com/maps/contrib/102064914246862075490/reviews?hl=en-US",
+              "review_url": "https://www.google.com/maps/reviews/data=!4m8!14m7!1m6!2m5!1sChZDSUhNMG9nS0VJQ0FnTURRaTl2OWRnEAE!2m1!1s0x0:0x68f20c78506cc026!3m1!1s2@1:CIHM0ogKEICAgMDQi9v9dg%7CCgwIlajPvgYQwK3KggE%7C?hl=en-US",
+              "profile_image_url": "https://lh3.googleusercontent.com/a-/ALV-UjXSJp4GfnQhzSQZpMwDQD7A59-6uowUrDP4ymKkM7Csor7sxes=s64-c-rp-mo-ba2-br100",
+              "owner_answer": null,
+              "original_owner_answer": null,
+              "owner_time_ago": null,
+              "owner_timestamp": null,
+              "review_id": "ChZDSUhNMG9nS0VJQ0FnTURRaTl2OWRnEAE",
+              "images": null,
+              "review_highlights": [
+                {
+                  "feature": "Service",
+                  "assessment": "Dine in\n5"
+                },
+                {
+                  "feature": "Meal type",
+                  "assessment": "Lunch"
+                },
+                {
+                  "feature": "Price per person",
+                  "assessment": "$20–30"
+                },
+                {
+                  "feature": "Food",
+                  "assessment": "4"
+                },
+                {
+                  "feature": "Atmosphere",
+                  "assessment": "5"
+                }
+              ]
+            },
+            {
+              "type": "google_reviews_search",
+              "rank_group": 8,
+              "rank_absolute": 8,
+              "position": "left",
+              "xpath": null,
+              "review_text": null,
+              "original_review_text": null,
+              "time_ago": "2 months ago",
+              "timestamp": "2025-02-17 11:02:58 +00:00",
+              "rating": {
+                "rating_type": "Max5",
+                "value": 4,
+                "votes_count": null,
+                "rating_max": 5
+              },
+              "reviews_count": 2,
+              "photos_count": 43,
+              "local_guide": true,
+              "profile_name": "aGMM Stark",
+              "profile_url": "https://www.google.com/maps/contrib/107122545361381435201/reviews?hl=en-US",
+              "review_url": "https://www.google.com/maps/reviews/data=!4m8!14m7!1m6!2m5!1sChdDSUhNMG9nS0VJQ0FnTUNncnVLYzRBRRAB!2m1!1s0x0:0x68f20c78506cc026!3m1!1s2@1:CIHM0ogKEICAgMCgruKc4AE%7CCgsI4q7MvQYQuNzlKg%7C?hl=en-US",
+              "profile_image_url": "https://lh3.googleusercontent.com/a/ACg8ocJSKOqaubtDWqFG9QC_KoKBUppaR6JiRbVeLjI3zuLGgWDILw=s64-c-rp-mo-ba2-br100",
+              "owner_answer": null,
+              "original_owner_answer": null,
+              "owner_time_ago": null,
+              "owner_timestamp": null,
+              "review_id": "ChdDSUhNMG9nS0VJQ0FnTUNncnVLYzRBRRAB",
+              "images": null,
+              "review_highlights": [
+                {
+                  "feature": "Service",
+                  "assessment": "Delivery\n4"
+                },
+                {
+                  "feature": "Meal type",
+                  "assessment": "Lunch"
+                },
+                {
+                  "feature": "Price per person",
+                  "assessment": "$20–30"
+                },
+                {
+                  "feature": "Food",
+                  "assessment": "4"
+                },
+                {
+                  "feature": "Atmosphere",
+                  "assessment": "4"
+                }
+              ]
+            },
+            {
+              "type": "google_reviews_search",
+              "rank_group": 9,
+              "rank_absolute": 9,
+              "position": "left",
+              "xpath": null,
+              "review_text": null,
+              "original_review_text": null,
+              "time_ago": "2 months ago",
+              "timestamp": "2025-02-04 05:03:53 +00:00",
+              "rating": {
+                "rating_type": "Max5",
+                "value": 4,
+                "votes_count": null,
+                "rating_max": 5
+              },
+              "reviews_count": 477,
+              "photos_count": 236,
+              "local_guide": true,
+              "profile_name": "Asish M (AM_)",
+              "profile_url": "https://www.google.com/maps/contrib/113101736446780000569/reviews?hl=en-US",
+              "review_url": "https://www.google.com/maps/reviews/data=!4m8!14m7!1m6!2m5!1sChZDSUhNMG9nS0VJQ0FnTUNBOC15Q1ZnEAE!2m1!1s0x0:0x68f20c78506cc026!3m1!1s2@1:CIHM0ogKEICAgMCA8-yCVg%7CCgsIub-GvQYQiKe2aw%7C?hl=en-US",
+              "profile_image_url": "https://lh3.googleusercontent.com/a-/ALV-UjXFnJdTYgWT4HM2h4yVd-Dr7FpwuG2w_ywK8SYWOXmtjH975Tf1QQ=s64-c-rp-mo-ba5-br100",
+              "owner_answer": null,
+              "original_owner_answer": null,
+              "owner_time_ago": null,
+              "owner_timestamp": null,
+              "review_id": "ChZDSUhNMG9nS0VJQ0FnTUNBOC15Q1ZnEAE",
+              "images": null,
+              "review_highlights": [
+                {
+                  "feature": "Food",
+                  "assessment": "4"
+                },
+                {
+                  "feature": "Service",
+                  "assessment": "5"
+                },
+                {
+                  "feature": "Atmosphere",
+                  "assessment": "5"
+                }
+              ]
+            },
+            {
+              "type": "google_reviews_search",
+              "rank_group": 10,
+              "rank_absolute": 10,
+              "position": "left",
+              "xpath": null,
+              "review_text": null,
+              "original_review_text": null,
+              "time_ago": "3 months ago",
+              "timestamp": "2025-01-28 01:22:28 +00:00",
+              "rating": {
+                "rating_type": "Max5",
+                "value": 5,
+                "votes_count": null,
+                "rating_max": 5
+              },
+              "reviews_count": 194,
+              "photos_count": 2421,
+              "local_guide": true,
+              "profile_name": "Yuta Higuchi",
+              "profile_url": "https://www.google.com/maps/contrib/112863706490498402138/reviews?hl=en-US",
+              "review_url": "https://www.google.com/maps/reviews/data=!4m8!14m7!1m6!2m5!1sChZDSUhNMG9nS0VJQ0FnSURfdDZyUGRBEAE!2m1!1s0x0:0x68f20c78506cc026!3m1!1s2@1:CIHM0ogKEICAgID_t6rPdA%7CCgwI1OLgvAYQwLixkQM%7C?hl=en-US",
+              "profile_image_url": "https://lh3.googleusercontent.com/a-/ALV-UjXtF5cHq1IMu4hq9t-iAPPq0gpC_LRZxS3WvJEKwImTE7NGhqIb=s64-c-rp-mo-ba6-br100",
+              "owner_answer": null,
+              "original_owner_answer": null,
+              "owner_time_ago": null,
+              "owner_timestamp": null,
+              "review_id": "ChZDSUhNMG9nS0VJQ0FnSURfdDZyUGRBEAE",
+              "images": [
+                {
+                  "type": "images_element",
+                  "alt": null,
+                  "url": null,
+                  "image_url": "https://lh3.googleusercontent.com/geougc-cs/AB3l90Dk7YV-H_aRbcAlus4SvSdj43exyx3SEbX6zz1KrdJ9DWsgHVYsGf9bTJ_r3CocKI--q3Df57G2nzDWAARaoDWDNJ3H856fSsaoJbC5_-Osu9wPgfIo5SfeAjH6s7YL1vscBteK"
+                }
+              ],
+              "review_highlights": [
+                {
+                  "feature": "Service",
+                  "assessment": "Dine in\n5"
+                },
+                {
+                  "feature": "Meal type",
+                  "assessment": "Lunch"
+                },
+                {
+                  "feature": "Price per person",
+                  "assessment": "$50–100"
+                },
+                {
+                  "feature": "Food",
+                  "assessment": "5"
+                },
+                {
+                  "feature": "Atmosphere",
+                  "assessment": "5"
+                }
+              ]
+            },
+            {
+              "type": "google_reviews_search",
+              "rank_group": 11,
+              "rank_absolute": 11,
+              "position": "left",
+              "xpath": null,
+              "review_text": null,
+              "original_review_text": null,
+              "time_ago": "3 months ago",
+              "timestamp": "2025-01-10 00:23:21 +00:00",
+              "rating": {
+                "rating_type": "Max5",
+                "value": 4,
+                "votes_count": null,
+                "rating_max": 5
+              },
+              "reviews_count": 19,
+              "photos_count": null,
+              "local_guide": true,
+              "profile_name": "Wei Ouyang",
+              "profile_url": "https://www.google.com/maps/contrib/104029803408113019388/reviews?hl=en-US",
+              "review_url": "https://www.google.com/maps/reviews/data=!4m8!14m7!1m6!2m5!1sChdDSUhNMG9nS0VJQ0FnSURmNF9uVmx3RRAB!2m1!1s0x0:0x68f20c78506cc026!3m1!1s2@1:CIHM0ogKEICAgIDf4_nVlwE%7CCgsI-dCBvAYQuJvRKg%7C?hl=en-US",
+              "profile_image_url": "https://lh3.googleusercontent.com/a/ACg8ocJyafhxIDhPZ36ygNfyVt9V0rn1MgSLvRbxGs89HGjLzHDm7g=s64-c-rp-mo-ba2-br100",
+              "owner_answer": null,
+              "original_owner_answer": null,
+              "owner_time_ago": null,
+              "owner_timestamp": null,
+              "review_id": "ChdDSUhNMG9nS0VJQ0FnSURmNF9uVmx3RRAB",
+              "images": null,
+              "review_highlights": [
+                {
+                  "feature": "Service",
+                  "assessment": "Dine in\n5"
+                },
+                {
+                  "feature": "Meal type",
+                  "assessment": "Lunch"
+                },
+                {
+                  "feature": "Price per person",
+                  "assessment": "$30–50"
+                },
+                {
+                  "feature": "Food",
+                  "assessment": "5"
+                },
+                {
+                  "feature": "Atmosphere",
+                  "assessment": "4"
+                }
+              ]
+            },
+            {
+              "type": "google_reviews_search",
+              "rank_group": 12,
+              "rank_absolute": 12,
+              "position": "left",
+              "xpath": null,
+              "review_text": null,
+              "original_review_text": null,
+              "time_ago": "3 months ago",
+              "timestamp": "2025-01-04 03:50:41 +00:00",
+              "rating": {
+                "rating_type": "Max5",
+                "value": 5,
+                "votes_count": null,
+                "rating_max": 5
+              },
+              "reviews_count": 1,
+              "photos_count": null,
+              "local_guide": false,
+              "profile_name": "Carey Hubby",
+              "profile_url": "https://www.google.com/maps/contrib/108313255064302420127/reviews?hl=en-US",
+              "review_url": "https://www.google.com/maps/reviews/data=!4m8!14m7!1m6!2m5!1sChdDSUhNMG9nS0VJQ0FnSURmbEk3bmlnRRAB!2m1!1s0x0:0x68f20c78506cc026!3m1!1s2@1:CIHM0ogKEICAgIDflI7nigE%7CCgwIkeDiuwYQgI__yAM%7C?hl=en-US",
+              "profile_image_url": "https://lh3.googleusercontent.com/a/ACg8ocL8k-295w0-z1P01GVWWDxcokDs4_fnx0cqL9eSUtlVihofAg=s64-c-rp-mo-br100",
+              "owner_answer": null,
+              "original_owner_answer": null,
+              "owner_time_ago": null,
+              "owner_timestamp": null,
+              "review_id": "ChdDSUhNMG9nS0VJQ0FnSURmbEk3bmlnRRAB",
+              "images": null,
+              "review_highlights": [
+                {
+                  "feature": "Service",
+                  "assessment": "Dine in"
+                },
+                {
+                  "feature": "Meal type",
+                  "assessment": "Dinner"
+                },
+                {
+                  "feature": "Price per person",
+                  "assessment": "$30–50"
+                }
+              ]
+            },
+            {
+              "type": "google_reviews_search",
+              "rank_group": 13,
+              "rank_absolute": 13,
+              "position": "left",
+              "xpath": null,
+              "review_text": null,
+              "original_review_text": null,
+              "time_ago": "3 months ago",
+              "timestamp": "2025-01-03 21:27:49 +00:00",
+              "rating": {
+                "rating_type": "Max5",
+                "value": 3,
+                "votes_count": null,
+                "rating_max": 5
+              },
+              "reviews_count": 410,
+              "photos_count": 1511,
+              "local_guide": true,
+              "profile_name": "Eric Perret",
+              "profile_url": "https://www.google.com/maps/contrib/111184799810075782476/reviews?hl=en-US",
+              "review_url": "https://www.google.com/maps/reviews/data=!4m8!14m7!1m6!2m5!1sChdDSUhNMG9nS0VJQ0FnSUNzMnA2T25BRRAB!2m1!1s0x0:0x68f20c78506cc026!3m1!1s2@1:CIHM0ogKEICAgICs2p6OnAE%7CCgwI1azhuwYQ0IHizQE%7C?hl=en-US",
+              "profile_image_url": "https://lh3.googleusercontent.com/a-/ALV-UjULRKhYBaDwZNiuYrQcEWrzI3YGqv9fTZdwuYLPbdc-4o4axSHlCQ=s64-c-rp-mo-ba6-br100",
+              "owner_answer": null,
+              "original_owner_answer": null,
+              "owner_time_ago": null,
+              "owner_timestamp": null,
+              "review_id": "ChdDSUhNMG9nS0VJQ0FnSUNzMnA2T25BRRAB",
+              "images": null,
+              "review_highlights": [
+                {
+                  "feature": "Service",
+                  "assessment": "Dine in\n4"
+                },
+                {
+                  "feature": "Meal type",
+                  "assessment": "Dinner"
+                },
+                {
+                  "feature": "Food",
+                  "assessment": "3"
+                },
+                {
+                  "feature": "Atmosphere",
+                  "assessment": "3"
+                },
+                {
+                  "feature": "Reservation",
+                  "assessment": "Varies by time / day"
+                },
+                {
+                  "feature": "Noise level",
+                  "assessment": "Loud, but you can still talk"
+                },
+                {
+                  "feature": "Wait time",
+                  "assessment": "No wait"
+                }
+              ]
+            },
+            {
+              "type": "google_reviews_search",
+              "rank_group": 14,
+              "rank_absolute": 14,
+              "position": "left",
+              "xpath": null,
+              "review_text": "First time getting the meat platter.. It's exactly what you want from a German restaurant. Plus a side of spaetzle of course.",
+              "original_review_text": null,
+              "time_ago": "4 months ago",
+              "timestamp": "2024-12-15 16:08:58 +00:00",
+              "rating": {
+                "rating_type": "Max5",
+                "value": 5,
+                "votes_count": null,
+                "rating_max": 5
+              },
+              "reviews_count": 42,
+              "photos_count": 17,
+              "local_guide": true,
+              "profile_name": "James Downs",
+              "profile_url": "https://www.google.com/maps/contrib/113215383231172904965/reviews?hl=en-US",
+              "review_url": "https://www.google.com/maps/reviews/data=!4m8!14m7!1m6!2m5!1sChdDSUhNMG9nS0VJQ0FnSUN2MTYyOS13RRAB!2m1!1s0x0:0x68f20c78506cc026!3m1!1s2@1:CIHM0ogKEICAgICv1629-wE%7CCgwImv77ugYQwIqFjwE%7C?hl=en-US",
+              "profile_image_url": "https://lh3.googleusercontent.com/a/ACg8ocJijk2imaWxjm1fKQ8BvwGKILGzNuHS4KNmJTe_yZIgrelp8Q=s64-c-rp-mo-ba4-br100",
+              "owner_answer": null,
+              "original_owner_answer": null,
+              "owner_time_ago": null,
+              "owner_timestamp": null,
+              "review_id": "ChdDSUhNMG9nS0VJQ0FnSUN2MTYyOS13RRAB",
+              "images": null,
+              "review_highlights": [
+                {
+                  "feature": "Service",
+                  "assessment": "Dine in"
+                },
+                {
+                  "feature": "Meal type",
+                  "assessment": "Dinner"
+                }
+              ]
+            },
+            {
+              "type": "google_reviews_search",
+              "rank_group": 15,
+              "rank_absolute": 15,
+              "position": "left",
+              "xpath": null,
+              "review_text": "Meh. Pretty overpriced and you’re pretty ignored. Beer good but maybe not worth it. Happy hour not too happy.",
+              "original_review_text": null,
+              "time_ago": "4 months ago",
+              "timestamp": "2024-12-11 23:51:10 +00:00",
+              "rating": {
+                "rating_type": "Max5",
+                "value": 2,
+                "votes_count": null,
+                "rating_max": 5
+              },
+              "reviews_count": 13,
+              "photos_count": 3,
+              "local_guide": true,
+              "profile_name": "Selma Kettwich",
+              "profile_url": "https://www.google.com/maps/contrib/109282543362538960646/reviews?hl=en-US",
+              "review_url": "https://www.google.com/maps/reviews/data=!4m8!14m7!1m6!2m5!1sChdDSUhNMG9nS0VJQ0FnSUN2a2NlVnFnRRAB!2m1!1s0x0:0x68f20c78506cc026!3m1!1s2@1:CIHM0ogKEICAgICvkceVqgE%7CCgwI7srougYQ4JjqhQM%7C?hl=en-US",
+              "profile_image_url": "https://lh3.googleusercontent.com/a-/ALV-UjVahk2p-im8vWhcuwpBZeLrAqFDMDsegfvOG2ULBm7rPfOASBXS=s64-c-rp-mo-ba2-br100",
+              "owner_answer": null,
+              "original_owner_answer": null,
+              "owner_time_ago": null,
+              "owner_timestamp": null,
+              "review_id": "ChdDSUhNMG9nS0VJQ0FnSUN2a2NlVnFnRRAB",
+              "images": null,
+              "review_highlights": [
+                {
+                  "feature": "Food",
+                  "assessment": "2"
+                },
+                {
+                  "feature": "Service",
+                  "assessment": "2"
+                },
+                {
+                  "feature": "Atmosphere",
+                  "assessment": "5"
+                }
+              ]
+            },
+            {
+              "type": "google_reviews_search",
+              "rank_group": 16,
+              "rank_absolute": 16,
+              "position": "left",
+              "xpath": null,
+              "review_text": "Excellent food and quality beers, the bartender Carlos very friendly and attentive!",
+              "original_review_text": "Excelente comida y cervezas de calidad , el bartender Carlos muy amable y atento !",
+              "time_ago": "5 months ago",
+              "timestamp": "2024-11-14 05:19:23 +00:00",
+              "rating": {
+                "rating_type": "Max5",
+                "value": 5,
+                "votes_count": null,
+                "rating_max": 5
+              },
+              "reviews_count": 8,
+              "photos_count": 1,
+              "local_guide": false,
+              "profile_name": "Eileen Loza",
+              "profile_url": "https://www.google.com/maps/contrib/111633512147022854649/reviews?hl=en-US",
+              "review_url": "https://www.google.com/maps/reviews/data=!4m8!14m7!1m6!2m5!1sChdDSUhNMG9nS0VJQ0FnSUQzcW9mb3dRRRAB!2m1!1s0x0:0x68f20c78506cc026!3m1!1s2@1:CIHM0ogKEICAgID3qofowQE%7CCgwI25DWuQYQ0IjstQM%7C?hl=en-US",
+              "profile_image_url": "https://lh3.googleusercontent.com/a/ACg8ocIG8gtXXuf8LjG5wyTfmMyS5VoqoSEE0ZZJevFv_M2mnv4dPfs=s64-c-rp-mo-br100",
+              "owner_answer": null,
+              "original_owner_answer": null,
+              "owner_time_ago": null,
+              "owner_timestamp": null,
+              "review_id": "ChdDSUhNMG9nS0VJQ0FnSUQzcW9mb3dRRRAB",
+              "images": null,
+              "review_highlights": [
+                {
+                  "feature": "Service",
+                  "assessment": "Dine in\n5"
+                },
+                {
+                  "feature": "Food",
+                  "assessment": "5"
+                },
+                {
+                  "feature": "Atmosphere",
+                  "assessment": "5"
+                }
+              ]
+            },
+            {
+              "type": "google_reviews_search",
+              "rank_group": 17,
+              "rank_absolute": 17,
+              "position": "left",
+              "xpath": null,
+              "review_text": "Pork shank no longer on menu. Waiter would ask you to surrender your credit card to prevent you from running away without paying. Weird.",
+              "original_review_text": null,
+              "time_ago": "5 months ago",
+              "timestamp": "2024-11-10 22:46:28 +00:00",
+              "rating": {
+                "rating_type": "Max5",
+                "value": 1,
+                "votes_count": null,
+                "rating_max": 5
+              },
+              "reviews_count": 7,
+              "photos_count": 3,
+              "local_guide": false,
+              "profile_name": "Kale H",
+              "profile_url": "https://www.google.com/maps/contrib/101961972717614625485/reviews?hl=en-US",
+              "review_url": "https://www.google.com/maps/reviews/data=!4m8!14m7!1m6!2m5!1sChZDSUhNMG9nS0VJQ0FnSUMzX19fU09nEAE!2m1!1s0x0:0x68f20c78506cc026!3m1!1s2@1:CIHM0ogKEICAgIC3___SOg%7CCgwIxO_EuQYQgPuc4AI%7C?hl=en-US",
+              "profile_image_url": "https://lh3.googleusercontent.com/a-/ALV-UjVbJTHa_nr83XdJ7_ArT5MkcKvXRWxpoIcfsf_-qmbRkvc3U2E=s64-c-rp-mo-br100",
+              "owner_answer": null,
+              "original_owner_answer": null,
+              "owner_time_ago": null,
+              "owner_timestamp": null,
+              "review_id": "ChZDSUhNMG9nS0VJQ0FnSUMzX19fU09nEAE",
+              "images": null,
+              "review_highlights": [
+                {
+                  "feature": "Service",
+                  "assessment": "Dine in\n1"
+                },
+                {
+                  "feature": "Meal type",
+                  "assessment": "Dinner"
+                },
+                {
+                  "feature": "Price per person",
+                  "assessment": "$30–50"
+                },
+                {
+                  "feature": "Food",
+                  "assessment": "3"
+                },
+                {
+                  "feature": "Atmosphere",
+                  "assessment": "4"
+                }
+              ]
+            },
+            {
+              "type": "google_reviews_search",
+              "rank_group": 18,
+              "rank_absolute": 18,
+              "position": "left",
+              "xpath": null,
+              "review_text": "You’re experiencing Europe in a whole new way right here! The food is great, with flavors that transport you across the Atlantic. They have an impressive selection of beers, both draft and bottled, so there’s something for everyone. The staff is fantastic – friendly, attentive, and really make you feel at home. A must-visit spot if you’re looking for that European vibe!",
+              "original_review_text": null,
+              "time_ago": "6 months ago",
+              "timestamp": "2024-10-30 02:03:27 +00:00",
+              "rating": {
+                "rating_type": "Max5",
+                "value": 4,
+                "votes_count": null,
+                "rating_max": 5
+              },
+              "reviews_count": 22,
+              "photos_count": null,
+              "local_guide": true,
+              "profile_name": "Engin Şentürk",
+              "profile_url": "https://www.google.com/maps/contrib/106597689200922008958/reviews?hl=en-US",
+              "review_url": "https://www.google.com/maps/reviews/data=!4m8!14m7!1m6!2m5!1sChZDSUhNMG9nS0VJQ0FnSURYamZuSmR3EAE!2m1!1s0x0:0x68f20c78506cc026!3m1!1s2@1:CIHM0ogKEICAgIDXjfnJdw%7CCgwI76eGuQYQ6JCq6AI%7C?hl=en-US",
+              "profile_image_url": "https://lh3.googleusercontent.com/a-/ALV-UjWv511GpEaEJCVc6-VksP_kFS4hhYUydgcR9rtpSHHd88PssSTS=s64-c-rp-mo-ba3-br100",
+              "owner_answer": null,
+              "original_owner_answer": null,
+              "owner_time_ago": null,
+              "owner_timestamp": null,
+              "review_id": "ChZDSUhNMG9nS0VJQ0FnSURYamZuSmR3EAE",
+              "images": null,
+              "review_highlights": [
+                {
+                  "feature": "Service",
+                  "assessment": "Dine in\n4"
+                },
+                {
+                  "feature": "Meal type",
+                  "assessment": "Dinner"
+                },
+                {
+                  "feature": "Price per person",
+                  "assessment": "$30–50"
+                },
+                {
+                  "feature": "Food",
+                  "assessment": "4"
+                },
+                {
+                  "feature": "Atmosphere",
+                  "assessment": "5"
+                }
+              ]
+            },
+            {
+              "type": "google_reviews_search",
+              "rank_group": 19,
+              "rank_absolute": 19,
+              "position": "left",
+              "xpath": null,
+              "review_text": "I found this place by accident and I’m so glad I did. The food is AMAZING and the portions are great for the price. They have lunch specials, too, which are also well priced for the amount of food. We got the chicken schnitzel, pretzel, and Spätzle, all to split, plus drinks. The total came out to less than I thought and I’m at the right level of full but not uncomfortable. Adding this to my list of places to come back to.\n\nThe staff was all friendly and willing to make recommendations when asked.",
+              "original_review_text": null,
+              "time_ago": "6 months ago",
+              "timestamp": "2024-10-18 19:42:18 +00:00",
+              "rating": {
+                "rating_type": "Max5",
+                "value": 5,
+                "votes_count": null,
+                "rating_max": 5
+              },
+              "reviews_count": 74,
+              "photos_count": 32,
+              "local_guide": true,
+              "profile_name": "Morgan Davis",
+              "profile_url": "https://www.google.com/maps/contrib/110483459995935701918/reviews?hl=en-US",
+              "review_url": "https://www.google.com/maps/reviews/data=!4m8!14m7!1m6!2m5!1sChZDSUhNMG9nS0VJQ0FnSUNYNWRTY2VREAE!2m1!1s0x0:0x68f20c78506cc026!3m1!1s2@1:CIHM0ogKEICAgICX5dSceQ%7CCgwImvTKuAYQ6MP-8wE%7C?hl=en-US",
+              "profile_image_url": "https://lh3.googleusercontent.com/a-/ALV-UjXPDPPU55Gz3GrwhZvoh2yK-8HSshT9YGDQnJEaFwJBPn46QUX0=s64-c-rp-mo-ba4-br100",
+              "owner_answer": null,
+              "original_owner_answer": null,
+              "owner_time_ago": null,
+              "owner_timestamp": null,
+              "review_id": "ChZDSUhNMG9nS0VJQ0FnSUNYNWRTY2VREAE",
+              "images": null,
+              "review_highlights": [
+                {
+                  "feature": "Service",
+                  "assessment": "Dine in\n5"
+                },
+                {
+                  "feature": "Meal type",
+                  "assessment": "Lunch"
+                },
+                {
+                  "feature": "Food",
+                  "assessment": "5"
+                },
+                {
+                  "feature": "Atmosphere",
+                  "assessment": "5"
+                }
+              ]
+            },
+            {
+              "type": "google_reviews_search",
+              "rank_group": 20,
+              "rank_absolute": 20,
+              "position": "left",
+              "xpath": null,
+              "review_text": "Great to watch sports, and perfect for large groups!\nMultiple screens for different games playing. Staff is accommodating to switching games.\nDrinks are bountiful and good portions. Food is decent.\nPerfect for large groups! And doesn't feel super cramped.",
+              "original_review_text": null,
+              "time_ago": "6 months ago",
+              "timestamp": "2024-10-18 06:13:55 +00:00",
+              "rating": {
+                "rating_type": "Max5",
+                "value": 5,
+                "votes_count": null,
+                "rating_max": 5
+              },
+              "reviews_count": 114,
+              "photos_count": 382,
+              "local_guide": true,
+              "profile_name": "Krystal Aranda",
+              "profile_url": "https://www.google.com/maps/contrib/117485808379222263389/reviews?hl=en-US",
+              "review_url": "https://www.google.com/maps/reviews/data=!4m8!14m7!1m6!2m5!1sChZDSUhNMG9nS0VJQ0FnSUNYNmJIeU5REAE!2m1!1s0x0:0x68f20c78506cc026!3m1!1s2@1:CIHM0ogKEICAgICX6bHyNQ%7CCgwIo_nHuAYQ8Pa4iQI%7C?hl=en-US",
+              "profile_image_url": "https://lh3.googleusercontent.com/a-/ALV-UjXrGQhVdz6Bn2SCSowBy4DIz9y5_ig5JagM2DDr7RDsrYsRbxTOGw=s64-c-rp-mo-ba5-br100",
+              "owner_answer": null,
+              "original_owner_answer": null,
+              "owner_time_ago": null,
+              "owner_timestamp": null,
+              "review_id": "ChZDSUhNMG9nS0VJQ0FnSUNYNmJIeU5REAE",
+              "images": null,
+              "review_highlights": [
+                {
+                  "feature": "Service",
+                  "assessment": "Dine in\n5"
+                },
+                {
+                  "feature": "Meal type",
+                  "assessment": "Other"
+                },
+                {
+                  "feature": "Price per person",
+                  "assessment": "$10–20"
+                },
+                {
+                  "feature": "Food",
+                  "assessment": "4"
+                },
+                {
+                  "feature": "Atmosphere",
+                  "assessment": "5"
+                }
+              ]
+            }
+          ]
+        }
+      }
+    ],
+    "Aggregate Review Text": [
+      {
+        "json": {
+          "review_text": [
+            "Delicious sausage boards and pretzels. Great atmosphere — especially for a game or large group",
+            "Quality German food, friendly staff",
+            "There for gathering, great ambiance, medieval style vibes, especially the tables",
+            "Fried chicken was oozing oil when I tried to cut it",
+            "Expensively decent.",
+            "First time getting the meat platter.. It's exactly what you want from a German restaurant. Plus a side of spaetzle of course.",
+            "Meh. Pretty overpriced and you’re pretty ignored. Beer good but maybe not worth it. Happy hour not too happy.",
+            "Excellent food and quality beers, the bartender Carlos very friendly and attentive!",
+            "Pork shank no longer on menu. Waiter would ask you to surrender your credit card to prevent you from running away without paying. Weird.",
+            "You’re experiencing Europe in a whole new way right here! The food is great, with flavors that transport you across the Atlantic. They have an impressive selection of beers, both draft and bottled, so there’s something for everyone. The staff is fantastic – friendly, attentive, and really make you feel at home. A must-visit spot if you’re looking for that European vibe!",
+            "I found this place by accident and I’m so glad I did. The food is AMAZING and the portions are great for the price. They have lunch specials, too, which are also well priced for the amount of food. We got the chicken schnitzel, pretzel, and Spätzle, all to split, plus drinks. The total came out to less than I thought and I’m at the right level of full but not uncomfortable. Adding this to my list of places to come back to.\n\nThe staff was all friendly and willing to make recommendations when asked.",
+            "Great to watch sports, and perfect for large groups!\nMultiple screens for different games playing. Staff is accommodating to switching games.\nDrinks are bountiful and good portions. Food is decent.\nPerfect for large groups! And doesn't feel super cramped."
+          ]
+        }
+      }
+    ]
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 0,
+  "updatedAt": "2025-05-23T22:45:27.000Z",
+  "versionId": "e4d3969e-50d3-4298-8508-16398cd6ec9d"
+}
