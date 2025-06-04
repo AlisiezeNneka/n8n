@@ -1,0 +1,278 @@
+{
+  "active": false,
+  "connections": {
+    "Run Every Day at 1 PM": {
+      "main": [
+        [
+          {
+            "node": "Fetch Search Terms from Sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    " Scrape Google Places with Dumpling AI": {
+      "main": [
+        [
+          {
+            "node": "Split Resulting Places List",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Resulting Places List": {
+      "main": [
+        [
+          {
+            "node": " Save Scraped Data to Sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Search Terms from Sheet": {
+      "main": [
+        [
+          {
+            "node": " Scrape Google Places with Dumpling AI",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "createdAt": "2025-06-03T00:00:51.779Z",
+  "id": "zKOSqoH6TJA6fmuM",
+  "isArchived": false,
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "name": "Scrape Google Places via Dumpling AI and Auto-Save to Google Sheets",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 13
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -480,
+        -180
+      ],
+      "id": "191b5e95-a169-421a-b922-951055926604",
+      "name": "Run Every Day at 1 PM"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://app.dumplingai.com/api/v1/search-places",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"query\": \"{{ $json['places '] }}\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -20,
+        -180
+      ],
+      "id": "1738c371-415e-48cc-8449-48f2c2fc4e53",
+      "name": " Scrape Google Places with Dumpling AI",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "RLFzAcGRepr5eXZB",
+          "name": "Dumpling AI-n8n"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "places",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        200,
+        -180
+      ],
+      "id": "70965a94-732e-4eac-b8c3-fdd3240ed9a7",
+      "name": "Split Resulting Places List"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1NkLQ4ZZ3qSv8HybYuKyW2BgViUij68ux4_SnoBphmWE",
+          "mode": "list",
+          "cachedResultName": "Google places",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1NkLQ4ZZ3qSv8HybYuKyW2BgViUij68ux4_SnoBphmWE/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 645811013,
+          "mode": "list",
+          "cachedResultName": "Sheet2",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1NkLQ4ZZ3qSv8HybYuKyW2BgViUij68ux4_SnoBphmWE/edit#gid=645811013"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "title": "={{ $json.title }}",
+            "address": "={{ $json.address }}",
+            "rating": "={{ $json.rating }}",
+            "category": "={{ $json.category }}",
+            "phoneNumber": "={{ $json.phoneNumber }}",
+            "website": "={{ $json.website }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "title",
+              "displayName": "title",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "address",
+              "displayName": "address",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "rating",
+              "displayName": "rating",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "category",
+              "displayName": "category",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "phoneNumber",
+              "displayName": "phoneNumber",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "website",
+              "displayName": "website",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        420,
+        -180
+      ],
+      "id": "c017e3c2-8d58-412e-9d5b-41d3ee079a82",
+      "name": " Save Scraped Data to Sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "GaJqJHuS5mQxap7q",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1NkLQ4ZZ3qSv8HybYuKyW2BgViUij68ux4_SnoBphmWE",
+          "mode": "list",
+          "cachedResultName": "Google places",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1NkLQ4ZZ3qSv8HybYuKyW2BgViUij68ux4_SnoBphmWE/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1NkLQ4ZZ3qSv8HybYuKyW2BgViUij68ux4_SnoBphmWE/edit#gid=0"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        -240,
+        -180
+      ],
+      "id": "93d4c184-363b-4dac-a87c-c60ec2ec91f8",
+      "name": "Fetch Search Terms from Sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "GaJqJHuS5mQxap7q",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "### 🗺️ Scrape and Save Google Places Listings\n\nThis workflow runs daily at 1 PM. It reads business-related search terms from a Google Sheet (Sheet1), such as \"best dentist in Houston\", and passes each term to Dumpling AI's `search-places` API. The returned list of places is split and parsed. Each entry is appended to another Google Sheet (Sheet2), capturing title, address, rating, category, phone number, and website. Perfect for building local lead lists from Google Maps results.\n",
+        "height": 240,
+        "width": 660
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -500,
+        -360
+      ],
+      "typeVersion": 1,
+      "id": "dce04c8d-5991-4ddb-86ad-faaaca388048",
+      "name": "Sticky Note"
+    }
+  ],
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 0,
+  "updatedAt": "2025-06-03T00:52:45.000Z",
+  "versionId": "c1bbe36f-5b6d-4cd0-827f-67990b139917"
+}
