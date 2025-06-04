@@ -1,0 +1,407 @@
+{
+  "active": false,
+  "connections": {
+    "Watch Folder for New YouTube Videos": {
+      "main": [
+        [
+          {
+            "node": "Download Video File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download Video File": {
+      "main": [
+        [
+          {
+            "node": "Convert Downloaded Video to Base64",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Convert Downloaded Video to Base64": {
+      "main": [
+        [
+          {
+            "node": "Transcribe Video with Dumpling AI (Full Transcript)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Transcribe Video with Dumpling AI (Full Transcript)": {
+      "main": [
+        [
+          {
+            "node": "Generate Blog & Image Prompt using GPT-4o",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Blog & Image Prompt using GPT-4o": {
+      "main": [
+        [
+          {
+            "node": "Generate Visual from Blog Prompt with Dumpling AI",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Visual from Blog Prompt with Dumpling AI": {
+      "main": [
+        [
+          {
+            "node": "Save Blog Post to Airtable",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save Blog Post to Airtable": {
+      "main": [
+        [
+          {
+            "node": "Upload Blog post Image to Airtable",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "createdAt": "2025-05-20T19:21:08.283Z",
+  "id": "kyDSmFJkvi8CYHh2",
+  "isArchived": false,
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "name": "Auto-Generate Blog & AI Image from YouTube Videos with Dumpling AI & GPT-4o",
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "triggerOn": "specificFolder",
+        "folderToWatch": {
+          "__rl": true,
+          "value": "1mde_V0ePcJEebVydygVKT7GDiABjj2A4",
+          "mode": "list",
+          "cachedResultName": "Youtube Videos",
+          "cachedResultUrl": "https://drive.google.com/drive/folders/1mde_V0ePcJEebVydygVKT7GDiABjj2A4"
+        },
+        "event": "fileCreated",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDriveTrigger",
+      "typeVersion": 1,
+      "position": [
+        -2960,
+        -420
+      ],
+      "id": "7847f8a8-a60e-4b2c-afa1-8d586cb42d5c",
+      "name": "Watch Folder for New YouTube Videos",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "B0Hulh0j065xznhI",
+          "name": "Google Drive account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "download",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $json.id }}",
+          "mode": "id"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        -2740,
+        -420
+      ],
+      "id": "cee77d1b-a91a-4fae-b5ae-eac34a9b0a03",
+      "name": "Download Video File",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "B0Hulh0j065xznhI",
+          "name": "Google Drive account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "binaryToPropery",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [
+        -2520,
+        -420
+      ],
+      "id": "7b5ae3f4-d89d-4506-985d-a4c2afc5c0f5",
+      "name": "Convert Downloaded Video to Base64"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://app.dumplingai.com/api/v1/extract-video",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"inputMethod\": \"base64\",\n  \"video\": \"{{ $json.data }}\",\n  \"prompt\": \"Please transcribe the entire audio content of this video. I need a clear, complete, and accurate transcript of everything that was said, without summarizing or skipping any part. Include all spoken words, even fillers or pauses like 'um' or 'uh', if present. Format the transcript in clean readable text, broken into paragraphs where appropriate.\",\n  \"jsonMode\": \"false\"\n}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -2300,
+        -420
+      ],
+      "id": "e94c073a-e8e3-4b7e-9b86-21f7568b98cb",
+      "name": "Transcribe Video with Dumpling AI (Full Transcript)",
+      "credentials": {
+        "httpBasicAuth": {
+          "id": "ZqOKe2AhRqsTlTR1",
+          "name": "n8n connections"
+        },
+        "httpHeaderAuth": {
+          "id": "RLFzAcGRepr5eXZB",
+          "name": "n8n"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4o",
+          "mode": "list",
+          "cachedResultName": "GPT-4O"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=You are an experienced blog writer and creative AI assistant. Based on the transcript I will provide, generate:\n\nA blog post that summarizes and expands on the key message of the video in a clear, engaging, and human tone.\n\nAn image prompt for AI image generation that visually supports the content of the blog post.\n\nBlog Post Guidelines:\n\nThe blog post should be written in a natural and conversational tone.\n\nIt must start with a strong opening paragraph that hooks the reader.\n\nFollow with 2 to 4 short paragraphs that explain or expand on the main ideas in the transcript.\n\nEnd with a clear conclusion or takeaway that wraps up the message or encourages readers to take action.\n\nDo not use overly technical or robotic language. Keep it clear and useful for the average reader.\n\nImage Prompt Guidelines:\n\nCreate a short, descriptive image prompt that visually represents the core message of the blog.\n\nThe image prompt should be suitable for AI image generation models like \nFLUX.1-pro.\n\nIt should be visually specific, using descriptive words that reflect the theme and tone of the blog.\n\nReturn your response in this exact JSON format:\n\n{\n  \"blog_post\": \"Your full blog content here\",\n  \"image_prompt\": \"Your image generation prompt here\"\n}",
+              "role": "system"
+            },
+            {
+              "content": "=Here is the transcript to work with:[{{ $json.results }} ] "
+            }
+          ]
+        },
+        "jsonOutput": true,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        -2080,
+        -420
+      ],
+      "id": "29e09351-0d8e-40c4-8a41-d00bff9e93a4",
+      "name": "Generate Blog & Image Prompt using GPT-4o",
+      "credentials": {
+        "openAiApi": {
+          "id": "fdhWALG84tBLgSZT",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://app.dumplingai.com/api/v1/generate-ai-image",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"FLUX.1-pro\",\n  \"input\": {\n    \"prompt\": \"{{ $json.message.content.image_prompt }}\",\n    \"width\": 1024,\n    \"height\": 576,\n    \"aspect_ratio\": \"16:9\"\n  }\n}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -1700,
+        -420
+      ],
+      "id": "d68ab832-0c22-4ee7-8406-f1aba6911f70",
+      "name": "Generate Visual from Blog Prompt with Dumpling AI",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "RLFzAcGRepr5eXZB",
+          "name": "n8n"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "create",
+        "base": {
+          "__rl": true,
+          "value": "appPSvSKdA6075xJC",
+          "mode": "list",
+          "cachedResultName": "Testing n8n",
+          "cachedResultUrl": "https://airtable.com/appPSvSKdA6075xJC"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblboiRp54hqA813K",
+          "mode": "list",
+          "cachedResultName": "social post",
+          "cachedResultUrl": "https://airtable.com/appPSvSKdA6075xJC/tblboiRp54hqA813K"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Content": "={{ $('Generate Blog & Image Prompt using GPT-4o').item.json.message.content.blog_post }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "ID",
+              "displayName": "ID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Content",
+              "displayName": "Content",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Attachments",
+              "displayName": "Attachments",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.1,
+      "position": [
+        -1480,
+        -420
+      ],
+      "id": "34b5a7a2-2cab-49a4-a905-dd6611de33f1",
+      "name": "Save Blog Post to Airtable",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "H8PVkBgUPCcUhhRC",
+          "name": "Airtable Personal Access Token account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "=https://api.airtable.com/v0/appPSvSKdA6075xJC/tblmqgjEwgIR6rpUZ/{{ $json.id }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {}
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"fields\": {\n    \"Attachments\": [\n      {\n        \"url\": \"{{ $('Generate Blog & Image Prompt using GPT-4o').item.json.message.content.image_prompt }}\"\n      }\n    ]\n  }\n}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -1260,
+        -420
+      ],
+      "id": "cc6c3c98-d639-4bd4-b727-3556e33c3397",
+      "name": "Upload Blog post Image to Airtable",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "VyzU59iFznTo7K6r",
+          "name": "Airtable Connection"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "### 🎥 From Video Upload to Blog Prompt\n\nThis part of the workflow starts when a new video is added to a designated Google Drive folder. It downloads the video and converts it into base64 format. That base64 video is then sent to Dumpling AI’s `extract-video` endpoint, which transcribes the entire audio content. The transcription is passed to GPT-4o, which writes a full blog post and also creates a descriptive image prompt based on the video's message.\n",
+        "height": 240,
+        "width": 700
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -2960,
+        -620
+      ],
+      "typeVersion": 1,
+      "id": "aa4fb418-c654-413e-986f-df5bad418703",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "### 📝 Generate Image and Save Blog to Airtable\n\nThe AI-generated image prompt is sent to Dumpling AI’s `generate-ai-image` endpoint (model FLUX.1-pro) to produce a visual that aligns with the blog post. The blog content is stored in Airtable under the `Content` field. Finally, the image prompt is also patched into the Airtable record under `Attachments` to complete the post entry for social use or publishing.\n",
+        "height": 260,
+        "width": 820
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -2040,
+        -620
+      ],
+      "typeVersion": 1,
+      "id": "8a379ab7-b7ba-409f-a072-c3e0c7e20f7e",
+      "name": "Sticky Note1"
+    }
+  ],
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 0,
+  "updatedAt": "2025-06-03T22:06:55.000Z",
+  "versionId": "41c42227-95ae-4535-be56-1cc8a71490ac"
+}
