@@ -1,0 +1,456 @@
+{
+  "active": false,
+  "connections": {
+    "Watch for New TikTok Handles in Airtable": {
+      "main": [
+        [
+          {
+            "node": "Get TikTok Profile Data via Dumpling AI",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get TikTok Profile Data via Dumpling AI": {
+      "main": [
+        [
+          {
+            "node": " Check if Follower Count is 100k or More",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    " Check if Follower Count is 100k or More": {
+      "main": [
+        [
+          {
+            "node": "Update Record with Basic TikTok Stats",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Update Record with All TikTok Stats ",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "createdAt": "2025-05-07T17:37:21.439Z",
+  "id": "thlRQfqORNJEz5Wm",
+  "isArchived": false,
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "name": "Auto-Scrape TikTok User Data via Dumpling AI and Segment in Airtable",
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "authentication": "airtableTokenApi",
+        "baseId": {
+          "__rl": true,
+          "value": "appPSvSKdA6075xJC",
+          "mode": "id"
+        },
+        "tableId": {
+          "__rl": true,
+          "value": "tblmqgjEwgIR6rpUZ",
+          "mode": "id"
+        },
+        "triggerField": "Tik tok username",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.airtableTrigger",
+      "typeVersion": 1,
+      "position": [
+        -660,
+        -80
+      ],
+      "id": "ff24f466-3350-4259-b8c4-12525f8fffce",
+      "name": "Watch for New TikTok Handles in Airtable",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "H8PVkBgUPCcUhhRC",
+          "name": "Airtable Personal Access Token account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://app.dumplingai.com/api/v1/get-tiktok-profile",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"handle\": \"{{ $json.fields['Tik tok username'] }}\"\n}\n ",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -440,
+        -80
+      ],
+      "id": "0f31947a-154a-4902-9cb4-d4b30979539e",
+      "name": "Get TikTok Profile Data via Dumpling AI",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "RLFzAcGRepr5eXZB",
+          "name": "n8n"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "aa9c64c8-e59d-4f8a-bf9b-e264027bf975",
+              "leftValue": "={{ $json.stats.followerCount }}",
+              "rightValue": 100000,
+              "operator": {
+                "type": "number",
+                "operation": "gte"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -220,
+        -80
+      ],
+      "id": "ba10cc9a-dede-41e3-9027-93fc07b039a0",
+      "name": " Check if Follower Count is 100k or More"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "base": {
+          "__rl": true,
+          "value": "appPSvSKdA6075xJC",
+          "mode": "list",
+          "cachedResultName": "Testing n8n",
+          "cachedResultUrl": "https://airtable.com/appPSvSKdA6075xJC"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblmqgjEwgIR6rpUZ",
+          "mode": "list",
+          "cachedResultName": "Table 1",
+          "cachedResultUrl": "https://airtable.com/appPSvSKdA6075xJC/tblmqgjEwgIR6rpUZ"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Tik tok username": "={{ $('Watch for New TikTok Handles in Airtable').item.json.fields['Tik tok username'] }}",
+            "id": "={{ $('Watch for New TikTok Handles in Airtable').item.json.id }}",
+            "ID": "={{ $json.user.id }}",
+            "followerCount": "={{ $json.stats.followerCount }}",
+            "followingCount": "={{ $json.stats.followingCount }}",
+            "heartCount": "={{ $json.stats.heart }}",
+            "videoCount": "={{ $json.stats.videoCount }}"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": false
+            },
+            {
+              "id": "Tik tok username",
+              "displayName": "Tik tok username",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "ID",
+              "displayName": "ID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "followerCount",
+              "displayName": "followerCount",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "followingCount",
+              "displayName": "followingCount",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "heartCount",
+              "displayName": "heartCount",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "videoCount",
+              "displayName": "videoCount",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "avatarLarger",
+              "displayName": "avatarLarger",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "readOnly": false,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        -180
+      ],
+      "id": "a0556542-a7f6-4e2a-9154-7f862f13f8fd",
+      "name": "Update Record with Basic TikTok Stats",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "H8PVkBgUPCcUhhRC",
+          "name": "Airtable Personal Access Token account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "base": {
+          "__rl": true,
+          "value": "appPSvSKdA6075xJC",
+          "mode": "list",
+          "cachedResultName": "Testing n8n",
+          "cachedResultUrl": "https://airtable.com/appPSvSKdA6075xJC"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblmqgjEwgIR6rpUZ",
+          "mode": "list",
+          "cachedResultName": "Table 1",
+          "cachedResultUrl": "https://airtable.com/appPSvSKdA6075xJC/tblmqgjEwgIR6rpUZ"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Tik tok username": "={{ $('Watch for New TikTok Handles in Airtable').item.json.fields['Tik tok username'] }}",
+            "id": "={{ $('Watch for New TikTok Handles in Airtable').item.json.id }}",
+            "ID": "={{ $json.user.id }}",
+            "followerCount": "={{ $json.stats.followerCount }}",
+            "followingCount": "={{ $json.stats.followingCount }}",
+            "heartCount": "={{ $json.stats.heart }}",
+            "videoCount": "={{ $json.stats.videoCount }}",
+            "avatarLarger": "={{ $json.user.avatarThumb }}"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": false
+            },
+            {
+              "id": "Tik tok username",
+              "displayName": "Tik tok username",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "ID",
+              "displayName": "ID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "followerCount",
+              "displayName": "followerCount",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "followingCount",
+              "displayName": "followingCount",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "heartCount",
+              "displayName": "heartCount",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "videoCount",
+              "displayName": "videoCount",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "avatarLarger",
+              "displayName": "avatarLarger",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.1,
+      "position": [
+        40,
+        0
+      ],
+      "id": "d3662656-b23e-49d6-8a85-0c9662ea3025",
+      "name": "Update Record with All TikTok Stats ",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "H8PVkBgUPCcUhhRC",
+          "name": "Airtable Personal Access Token account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "### 📊 TikTok Profile Scraper & Airtable Filter with Dumpling AI\n\nThis workflow takes a list of TikTok profile URLs from Airtable and enriches them using Dumpling AI’s scraping API. It checks each profile's follower count, and only those with more than a set threshold (e.g. 10,000) are saved into a second Airtable base for qualified influencers.\n\n**How it works:**\n1. **Start Manually:** You trigger the workflow manually to begin the scraping process.\n2. **Get TikTok Links from Airtable:** It reads TikTok profile URLs from the source Airtable table.\n3. **Scrape Each Profile with Dumpling AI:** Sends the URL to Dumpling AI’s web scraper API to fetch profile stats.\n4. **Extract Follower Count:** Uses the Edit Fields node to isolate the follower count from the returned data.\n5. **Filter Profiles:** The workflow only continues for profiles with more than 10,000 followers.\n6. **Save to Airtable:** The qualified profiles are stored in a second Airtable table for follow-up or outreach.\n\nThis is perfect for brands, agencies, or marketers who want to automatically qualify TikTok creators before reaching out.\n",
+        "height": 360,
+        "width": 760
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -860,
+        -460
+      ],
+      "typeVersion": 1,
+      "id": "5db3da72-a48b-4b79-bb28-730ed2529406",
+      "name": "Sticky Note"
+    }
+  ],
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 0,
+  "updatedAt": "2025-05-21T19:34:42.000Z",
+  "versionId": "7b954f02-3201-44d8-bb10-ed0036bb71ed"
+}
