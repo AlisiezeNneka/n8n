@@ -1,0 +1,542 @@
+{
+  "active": false,
+  "connections": {
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Uses a structured LangChain system prompt to extract key info",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Watches a specific Google Drive folder for new files (PDFs/invoices)": {
+      "main": [
+        [
+          {
+            "node": "Downloads the file that triggered the workflow",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Downloads the file that triggered the workflow": {
+      "main": [
+        [
+          {
+            "node": "Extracts raw text content from the PDF invoice",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extracts raw text content from the PDF invoice": {
+      "main": [
+        [
+          {
+            "node": "Uses a structured LangChain system prompt to extract key info",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Uses a structured LangChain system prompt to extract key info": {
+      "main": [
+        [
+          {
+            "node": "Generates an email subject and body ",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generates an email subject and body ": {
+      "main": [
+        [
+          {
+            "node": "Sends the generated email to notify the finance or operations team",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sends the generated email to notify the finance or operations team": {
+      "main": [
+        [
+          {
+            "node": "Loads the extracted Line Item Details array into a structured format for processing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loads the extracted Line Item Details array into a structured format for processing": {
+      "main": [
+        [
+          {
+            "node": "Splits each item in the Line Item Details array for individual insertion into Google Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Splits each item in the Line Item Details array for individual insertion into Google Sheets": {
+      "main": [
+        [
+          {
+            "node": "Appends structured data (invoice metadata and line item details) into a specific Google Sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "createdAt": "2025-06-04T19:00:24.691Z",
+  "id": "w43Z0MXl2VrkcCUX",
+  "isArchived": false,
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "name": "AI Invoice Extractor & Notifier: Auto-Parse Google Drive Invoices to Google Sheets + Email Notification",
+  "nodes": [
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4o-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        -132,
+        260
+      ],
+      "id": "f5a78136-5e38-48da-8e13-9161898cb90f",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "fdhWALG84tBLgSZT",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "triggerOn": "specificFolder",
+        "folderToWatch": {
+          "__rl": true,
+          "value": "1KhUYRzYPUZMQgUjdk01cfEAoitUfsWbU",
+          "mode": "list",
+          "cachedResultName": "invoice-n8n2",
+          "cachedResultUrl": "https://drive.google.com/drive/folders/1KhUYRzYPUZMQgUjdk01cfEAoitUfsWbU"
+        },
+        "event": "fileCreated",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDriveTrigger",
+      "typeVersion": 1,
+      "position": [
+        -880,
+        40
+      ],
+      "id": "2952db81-da78-49aa-83d2-6c0e879b5828",
+      "name": "Watches a specific Google Drive folder for new files (PDFs/invoices)",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "B0Hulh0j065xznhI",
+          "name": "nnekajennifer"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "download",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $json.id }}",
+          "mode": "id"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        -660,
+        40
+      ],
+      "id": "830500b3-6161-4bca-8362-ab9446b97e33",
+      "name": "Downloads the file that triggered the workflow",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "B0Hulh0j065xznhI",
+          "name": "nnekajennifer"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "pdf",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [
+        -440,
+        40
+      ],
+      "id": "9c7d6a11-5956-43db-8a6e-de3db36afe59",
+      "name": "Extracts raw text content from the PDF invoice"
+    },
+    {
+      "parameters": {
+        "text": "={{ $json.text }}",
+        "schemaType": "manual",
+        "inputSchema": "{\n  \"invoice_number\": \"SM-INV-2304\",\n  \"date_issued\": \"June 4, 2025\",\n  \"due_date\": \"June 11, 2025\",\n  \"issued_to\": \"Riverside Tech Solutions\",\n  \"line_items\": [\n    {\n      \"item\": \"HP LaserJet Pro MFP M428fdw\",\n      \"description\": \"Wireless monochrome all-in-one printer\",\n      \"quantity\": \"2\",\n      \"unit_price\": \"₦250,000\",\n      \"amount\": \"₦500,000\"\n    },\n    {\n      \"item\": \"Logitech MX Master 3 Mouse\",\n      \"description\": \"Advanced wireless mouse for productivity\",\n      \"quantity\": \"3\",\n      \"unit_price\": \"₦75,000\",\n      \"amount\": \"₦225,000\"\n    },\n    {\n      \"item\": \"APC Back-UPS 700VA\",\n      \"description\": \"Uninterruptible power supply for home/office use\",\n      \"quantity\": \"4\",\n      \"unit_price\": \"₦60,000\",\n      \"amount\": \"₦240,000\"\n    },\n    {\n      \"item\": \"TP-Link Archer AX73 Router\",\n      \"description\": \"High-speed WiFi 6 dual-band router\",\n      \"quantity\": \"1\",\n      \"unit_price\": \"₦120,000\",\n      \"amount\": \"₦120,000\"\n    },\n    {\n      \"item\": \"Samsung 24\\\" FHD Monitor\",\n      \"description\": \"LED display with HDMI and VGA input\",\n      \"quantity\": \"5\",\n      \"unit_price\": \"₦85,000\",\n      \"amount\": \"₦425,000\"\n    }\n  ],\n  \"total_amount\": \"₦1,623,250\"\n}\n",
+        "options": {
+          "systemPromptTemplate": "rompt for AI Extractor:\n\nYou are a smart data extraction agent designed to accurately extract information from invoices in various formats and styles.\n\nYour task is to extract the following fields from the text. The invoice structure may vary, but the information must always be extracted based on context and meaning.\n\nExtract the following:\n\nInvoice Metadata\n\nInvoice Number (string): The invoice reference number\n\nDate Issued (date): The date the invoice was issued\n\nDue Date (date): The payment due date\n\nIssued To (string): The company or person the invoice was billed to\n\nLine Item Details\nFor each item listed in the invoice, extract:\n\nItem (string): The product or service name\n\nDescription (string): The details or specifications of the item\n\nQuantity (string): The quantity of that item purchased\n\nUnit Price (string): The price of one unit of the item\n\nAmount (string): The total amount for that line item\n\nFinal Total\n\nTotal Amount (string): The total invoice value including all line items\n\nThe invoice may include multiple line items. Ensure that each one is extracted individually and fully. Use intelligent pattern recognition to detect and return each item even when formats or headings differ.\n\nIf a field is missing, return an empty value for that specific field, but do not skip the record.\n\nMaintain the original formatting for currency and dates exactly as presented (e.g., ₦1,623,250 or June 4, 2025). Do not summarize or rephrase values.\n\nReturn all extracted fields in structured output. Extract only the information listed above.\n\n"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.informationExtractor",
+      "typeVersion": 1,
+      "position": [
+        -220,
+        40
+      ],
+      "id": "f0de37a4-b475-4bc4-9135-658a3fb3a0af",
+      "name": "Uses a structured LangChain system prompt to extract key info"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4o",
+          "mode": "list",
+          "cachedResultName": "GPT-4O"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=You are a notification assistant. When a new invoice is submitted, you generate an email subject and body to notify the team.\n\n\nGenerate the following:\n\nSubject: A short line that includes the invoice number, e.g., New Invoice Submitted - invoice_number\n\nBody: A professional message to the team informing them that a new invoice has been submitted. It should include the invoice number and the link to the spreadsheet where they can view the invoice.",
+              "role": "system"
+            },
+            {
+              "content": "=Use the values below to generate the message:\n\nInvoice Number: {{ $json.output['Invoice Metadata']['Invoice Number'] }}\n\nSpreadsheet Link: https://docs.google.com/spreadsheets/d/170eyZdmRUNXlpSZmcl5PiHTUKjukd-soDQq2cAe6FQo/edit?gid=0#gid=0"
+            }
+          ]
+        },
+        "jsonOutput": true,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        156,
+        40
+      ],
+      "id": "9e9cf4e5-5ccf-4ac3-b841-6f1814a5f77b",
+      "name": "Generates an email subject and body ",
+      "credentials": {
+        "openAiApi": {
+          "id": "fdhWALG84tBLgSZT",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "nalisieze@gmail.com",
+        "subject": "={{ $json.message.content.subject }}",
+        "emailType": "text",
+        "message": "={{ $json.message.content.body }}",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        540,
+        40
+      ],
+      "id": "54cf18bd-b6cf-4a7d-8726-c5a3c835105f",
+      "name": "Sends the generated email to notify the finance or operations team",
+      "webhookId": "6e9a8866-2c20-4350-b0f4-b62c72ae5717",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "j70r3RTMED1pgN3R",
+          "name": "Gmail account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "bd828690-dbbb-48cc-a060-db8c286fe4f0",
+              "name": "output[\"Line Item Details\"]",
+              "value": "={{ $('Uses a structured LangChain system prompt to extract key info').item.json.output[\"Line Item Details\"] }}",
+              "type": "array"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        752,
+        40
+      ],
+      "id": "4acc965d-6f60-4a80-bda6-119e9772fca4",
+      "name": "Loads the extracted Line Item Details array into a structured format for processing"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "output[\"Line Item Details\"]",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        972,
+        40
+      ],
+      "id": "da4e9637-ffa4-4edf-8410-0d99cc7ecfa2",
+      "name": "Splits each item in the Line Item Details array for individual insertion into Google Sheets"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "170eyZdmRUNXlpSZmcl5PiHTUKjukd-soDQq2cAe6FQo",
+          "mode": "list",
+          "cachedResultName": "my invoice",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/170eyZdmRUNXlpSZmcl5PiHTUKjukd-soDQq2cAe6FQo/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/170eyZdmRUNXlpSZmcl5PiHTUKjukd-soDQq2cAe6FQo/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Invoice Number": "={{ $('Uses a structured LangChain system prompt to extract key info').item.json.output['Invoice Metadata']['Invoice Number'] }}",
+            "Date Issued": "={{ $('Uses a structured LangChain system prompt to extract key info').item.json.output['Invoice Metadata']['Date Issued'] }}",
+            "Due Date": "={{ $('Uses a structured LangChain system prompt to extract key info').item.json.output['Invoice Metadata']['Due Date'] }}",
+            "Ship to name": "={{ $('Uses a structured LangChain system prompt to extract key info').item.json.output['Invoice Metadata']['Issued To'] }}",
+            "Item": "={{ $json.Item}}",
+            "Description": "={{ $json.Description }}",
+            "Quantity": "={{ $json.Quantity }}",
+            "Unity price": "={{ $json[\"Unit Price\"] }}",
+            "Total price": "={{ $json.Amount }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Invoice Number",
+              "displayName": "Invoice Number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Date Issued",
+              "displayName": "Date Issued",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Due Date",
+              "displayName": "Due Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Ship to name",
+              "displayName": "Ship to name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Ship to address",
+              "displayName": "Ship to address",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Item",
+              "displayName": "Item",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Description",
+              "displayName": "Description",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Quantity",
+              "displayName": "Quantity",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Unity price",
+              "displayName": "Unity price",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Total price",
+              "displayName": "Total price",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        1200,
+        40
+      ],
+      "id": "01223c87-9083-4582-94ea-be4e1bf7dae9",
+      "name": "Appends structured data (invoice metadata and line item details) into a specific Google Sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "GaJqJHuS5mQxap7q",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "### 📌 Sticky Note\n\nThis workflow automates invoice processing from Google Drive. When a new file is uploaded, it’s downloaded and its content is extracted. LangChain is used to extract structured invoice data such as invoice number, date, line items, and total. A split node handles multiple line items for accurate logging in Google Sheets. An OpenAI node then creates an email summary, which is sent using Gmail to notify the team. This eliminates manual entry, ensures structured record-keeping, and speeds up invoice handling.\n",
+        "height": 280,
+        "width": 880
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -900,
+        -160
+      ],
+      "typeVersion": 1,
+      "id": "97992d28-9f9a-45c1-a38e-20f272ef3ef7",
+      "name": "Sticky Note"
+    }
+  ],
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "shared": [
+    {
+      "createdAt": "2025-06-04T19:00:24.695Z",
+      "updatedAt": "2025-06-04T19:00:24.695Z",
+      "role": "workflow:owner",
+      "workflowId": "w43Z0MXl2VrkcCUX",
+      "projectId": "BTzFLWjYjhwngt0G",
+      "project": {
+        "createdAt": "2025-04-14T17:27:50.055Z",
+        "updatedAt": "2025-04-14T18:50:28.711Z",
+        "id": "BTzFLWjYjhwngt0G",
+        "name": "Nneka Alisieze <nnekajenniferalisieze@gmail.com>",
+        "type": "personal",
+        "icon": null,
+        "projectRelations": [
+          {
+            "createdAt": "2025-04-14T17:27:50.056Z",
+            "updatedAt": "2025-04-14T17:27:50.056Z",
+            "role": "project:personalOwner",
+            "userId": "5993ed05-9b97-4791-b87b-356e5b97ab23",
+            "projectId": "BTzFLWjYjhwngt0G",
+            "user": {
+              "createdAt": "2025-04-14T17:27:50.054Z",
+              "updatedAt": "2025-06-03T12:49:59.544Z",
+              "id": "5993ed05-9b97-4791-b87b-356e5b97ab23",
+              "email": "nnekajenniferalisieze@gmail.com",
+              "firstName": "Nneka",
+              "lastName": "Alisieze",
+              "personalizationAnswers": null,
+              "settings": {
+                "easyAIWorkflowOnboarded": true,
+                "userClaimedAiCredits": true,
+                "firstSuccessfulWorkflowId": "GraAdqS3kx60AfW5",
+                "userActivated": true,
+                "userActivatedAt": 1748954990884
+              },
+              "role": "global:member",
+              "disabled": false,
+              "mfaEnabled": false,
+              "isPending": false
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 0,
+  "updatedAt": "2025-06-04T22:09:02.000Z",
+  "versionId": "ec03e143-c71d-451e-b9ea-2154ad67b328"
+}
