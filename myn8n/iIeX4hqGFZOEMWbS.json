@@ -1,0 +1,317 @@
+{
+  "active": false,
+  "connections": {
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pinecone Vector Store1": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings OpenAI1": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Pinecone Vector Store1",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "On Form Submission (FAQ Upload Form)": {
+      "main": [
+        [
+          {
+            "node": "Upload Chunks to Pinecone (FAQs Namespace)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    " Generate Embeddings for New File (Initial)": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Upload Chunks to Pinecone (FAQs Namespace)",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    " Load Uploaded Document from Form": {
+      "ai_document": [
+        [
+          {
+            "node": "Upload Chunks to Pinecone (FAQs Namespace)",
+            "type": "ai_document",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    " Split Document into Smaller Chunks": {
+      "ai_textSplitter": [
+        [
+          {
+            "node": " Load Uploaded Document from Form",
+            "type": "ai_textSplitter",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "createdAt": "2025-06-01T17:29:43.485Z",
+  "id": "iIeX4hqGFZOEMWbS",
+  "isArchived": false,
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "name": "Upload FAQs to Pinecone Vector DB",
+  "nodes": [
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -440,
+        -120
+      ],
+      "id": "3351e590-35e9-4b4e-89e8-3fb3f81805f2",
+      "name": "When chat message received",
+      "webhookId": "19a33928-b324-495c-b550-bfcd457794e6"
+    },
+    {
+      "parameters": {
+        "options": {
+          "systemMessage": "=You are an AI assistant for a beauty salon. Your responses must be based entirely on information retrieved through the connected knowledgebase. Always query the latest relevant data using the user's question as the query input to Pinecone. Then use that retrieved context to form a helpful, friendly, and professional answe"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.9,
+      "position": [
+        -140,
+        -120
+      ],
+      "id": "490435f8-e35b-4f79-80f0-92595145ac73",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-4o",
+          "mode": "list",
+          "cachedResultName": "gpt-4o"
+        },
+        "options": {
+          "temperature": 0.4
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        -200,
+        80
+      ],
+      "id": "02e93be4-3ee4-4293-8847-21c3ee190107",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "fdhWALG84tBLgSZT",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "retrieve-as-tool",
+        "toolName": "knowledgebase",
+        "toolDescription": "Use this tool for answer questions regarding the beauty salon",
+        "pineconeIndex": {
+          "__rl": true,
+          "value": "demo",
+          "mode": "list",
+          "cachedResultName": "demo"
+        },
+        "options": {
+          "pineconeNamespace": "FAQs"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStorePinecone",
+      "typeVersion": 1.1,
+      "position": [
+        -40,
+        140
+      ],
+      "id": "d4d8a3fe-f95e-48c0-ba01-9b68a1ef2175",
+      "name": "Pinecone Vector Store1",
+      "credentials": {
+        "pineconeApi": {
+          "id": "ED3drjBZhQWgyuJi",
+          "name": "PineconeApi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        160,
+        320
+      ],
+      "id": "f62912b2-5c81-447e-b2c6-c566e679ca1b",
+      "name": "Embeddings OpenAI1",
+      "credentials": {
+        "openAiApi": {
+          "id": "fdhWALG84tBLgSZT",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "formTitle": "Test",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Name"
+            },
+            {
+              "fieldLabel": "Image/JSON",
+              "fieldType": "file"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.2,
+      "position": [
+        -1300,
+        -80
+      ],
+      "id": "ca33867e-106e-4ab7-a6d2-ae49e23cb468",
+      "name": "On Form Submission (FAQ Upload Form)",
+      "webhookId": "11191712-41e9-44fe-ada6-155286da9840"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        -1060,
+        120
+      ],
+      "id": "a9dcbf63-619d-450f-8d96-014fda844da7",
+      "name": " Generate Embeddings for New File (Initial)",
+      "credentials": {
+        "openAiApi": {
+          "id": "fdhWALG84tBLgSZT",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "dataType": "binary",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.documentDefaultDataLoader",
+      "typeVersion": 1,
+      "position": [
+        -900,
+        140
+      ],
+      "id": "1248f2d7-374f-4d3b-ab40-a7d8b486268f",
+      "name": " Load Uploaded Document from Form"
+    },
+    {
+      "parameters": {
+        "chunkOverlap": 200,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.textSplitterRecursiveCharacterTextSplitter",
+      "typeVersion": 1,
+      "position": [
+        -800,
+        360
+      ],
+      "id": "1fb5cfb3-54dc-4514-808a-1b5ec7d9fff5",
+      "name": " Split Document into Smaller Chunks"
+    },
+    {
+      "parameters": {
+        "mode": "insert",
+        "pineconeIndex": {
+          "__rl": true,
+          "value": "demo",
+          "mode": "list",
+          "cachedResultName": "demo"
+        },
+        "options": {
+          "pineconeNamespace": "FAQs"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStorePinecone",
+      "typeVersion": 1.1,
+      "position": [
+        -1040,
+        -80
+      ],
+      "id": "cd5fc587-0b94-427c-87fd-e8682009da56",
+      "name": "Upload Chunks to Pinecone (FAQs Namespace)",
+      "credentials": {
+        "pineconeApi": {
+          "id": "ED3drjBZhQWgyuJi",
+          "name": "PineconeApi account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 0,
+  "updatedAt": "2025-06-04T16:18:24.000Z",
+  "versionId": "525a15c4-621c-4951-a3f6-f02253d2f65d"
+}
