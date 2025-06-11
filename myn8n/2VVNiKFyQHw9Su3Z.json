@@ -284,7 +284,7 @@
             {
               "id": "85fc5316-b7a1-4cd8-9900-58795dcfe06c",
               "name": "repo.name",
-              "value": "n8n",
+              "value": "n8n-project",
               "type": "string"
             },
             {
@@ -301,7 +301,7 @@
       "typeVersion": 3.4,
       "position": [
         -740,
-        -135
+        -140
       ],
       "id": "a20ce0e3-5b1a-490e-b40e-37979554f723",
       "name": "Sets GitHub file path details"
@@ -318,8 +318,10 @@
         },
         "repository": {
           "__rl": true,
-          "value": "={{ $json.repo.name }}",
-          "mode": "name"
+          "value": "n8n",
+          "mode": "list",
+          "cachedResultName": "n8n",
+          "cachedResultUrl": "https://github.com/AlisiezeNneka/n8n"
         },
         "filePath": "={{ $json.repo.path }}{{ $(' Triggers when called by another workflow').item.json.id }}.json",
         "asBinaryProperty": false,
@@ -329,7 +331,7 @@
       "typeVersion": 1.1,
       "position": [
         -520,
-        -135
+        -140
       ],
       "id": "417dd29a-e00f-451e-8743-10fee580e76f",
       "name": "Fetches the matching JSON file from GitHub",
@@ -566,9 +568,7 @@
         "repository": {
           "__rl": true,
           "value": "n8n",
-          "mode": "list",
-          "cachedResultName": "n8n",
-          "cachedResultUrl": "https://github.com/AlisiezeNneka/n8n"
+          "mode": "name"
         },
         "filePath": "={{ $('Sets GitHub file path details').item.json.repo.path }}{{ $(' Triggers when called by another workflow').item.json.id }}.json",
         "fileContent": "={{ $('Determines if the workflow is new, changed, or unchanged.').item.json.n8n_data_stringy }}",
@@ -602,6 +602,6 @@
   },
   "tags": [],
   "triggerCount": 1,
-  "updatedAt": "2025-06-04T16:19:47.000Z",
-  "versionId": "8940a6c2-b5d6-4e70-a10b-a220a6cb830d"
+  "updatedAt": "2025-06-11T13:04:26.000Z",
+  "versionId": "a1a6a4d1-b6af-458f-8bd0-78186b28d14b"
 }
