@@ -1,0 +1,402 @@
+{
+  "active": false,
+  "connections": {
+    "Run Daily to Process New Leads": {
+      "main": [
+        [
+          {
+            "node": "Search Cold Leads Without Icebreaker",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search Cold Leads Without Icebreaker": {
+      "main": [
+        [
+          {
+            "node": "Loop Through Each Lead",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Through Each Lead": {
+      "main": [
+        [
+          {
+            "node": "No Operation, do nothing",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Wait Before Making Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait Before Making Request": {
+      "main": [
+        [
+          {
+            "node": "Scrape Lead Website with Dumpling AI",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Scrape Lead Website with Dumpling AI": {
+      "main": [
+        [
+          {
+            "node": "Generate Icebreaker, Summary & Email (GPT-4o)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Icebreaker, Summary & Email (GPT-4o)": {
+      "main": [
+        [
+          {
+            "node": "Save AI Output Back to Airtable",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save AI Output Back to Airtable": {
+      "main": [
+        [
+          {
+            "node": "Loop Through Each Lead",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "createdAt": "2025-06-10T23:26:42.176Z",
+  "id": "FQ3d3ucbw3NXgnUo",
+  "isArchived": false,
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "name": "AI Icebreaker Builder: Scrape Sites with Dumpling AI and Save to Airtable",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        100,
+        -140
+      ],
+      "id": "40c158ab-6e9c-4296-873c-c879714b65a6",
+      "name": "No Operation, do nothing"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {}
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -560,
+        60
+      ],
+      "id": "d63720a5-9785-45d1-a8ba-a9c961031095",
+      "name": "Run Daily to Process New Leads"
+    },
+    {
+      "parameters": {
+        "operation": "search",
+        "base": {
+          "__rl": true,
+          "value": "appPSvSKdA6075xJC",
+          "mode": "list",
+          "cachedResultName": "Testing n8n",
+          "cachedResultUrl": "https://airtable.com/appPSvSKdA6075xJC"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tbl1KgkRF2EEMc2Fq",
+          "mode": "list",
+          "cachedResultName": "cold leads",
+          "cachedResultUrl": "https://airtable.com/appPSvSKdA6075xJC/tbl1KgkRF2EEMc2Fq"
+        },
+        "filterByFormula": "{Ice breaker} = ''",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.1,
+      "position": [
+        -340,
+        60
+      ],
+      "id": "e5804c37-2a8d-4574-852a-f885c6941e31",
+      "name": "Search Cold Leads Without Icebreaker",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "H8PVkBgUPCcUhhRC",
+          "name": "Airtable Personal Access Token account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        -120,
+        60
+      ],
+      "id": "839fd20b-5a5d-4419-85b0-9b82223c8b95",
+      "name": "Loop Through Each Lead"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        100,
+        60
+      ],
+      "id": "78b197e2-6028-49a0-9100-5cc44838a9cd",
+      "name": "Wait Before Making Request",
+      "webhookId": "d6b29fad-724c-49ad-93ed-6ebfe17d3a4c"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://app.dumplingai.com/api/v1/scrape",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"url\": \"{{ $json.Website }}\"\n}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        320,
+        60
+      ],
+      "id": "de96d330-006b-4410-8b75-83c3b9658045",
+      "name": "Scrape Lead Website with Dumpling AI",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "RLFzAcGRepr5eXZB",
+          "name": "Dumpling AI-n8n"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "chatgpt-4o-latest",
+          "mode": "list",
+          "cachedResultName": "CHATGPT-4O-LATEST"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=You are a smart assistant helping write personalized outreach. Below is content scraped from a lead’s website, along with the lead’s name.\n\nUsing this, please generate the following:\n\nIcebreaker: A short, friendly opening line that shows we took time to look at their business.\n\nEmail Body: A short cold outreach email that introduces what we do and how we can help, referencing their business or needs where relevant.\n\nWebsite Summary: A short summary (2 or 3 lines) of what their website is about, written in plain English.\n\nPlease return your response in this JSON format:\n\n{\n  \"icebreaker\": \"string\",\n  \"email_body\": \"string\",\n  \"website_summary\": \"string\"\n}",
+              "role": "system"
+            },
+            {
+              "content": "=Lead Name: {{ $('Search Cold Leads Without Icebreaker').item.json.Name }}\nScraped Website Content:{{ $json.content }}"
+            }
+          ]
+        },
+        "jsonOutput": true,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        540,
+        60
+      ],
+      "id": "5d5675b6-4245-4562-a9d2-7cf54fe20b75",
+      "name": "Generate Icebreaker, Summary & Email (GPT-4o)",
+      "credentials": {
+        "openAiApi": {
+          "id": "dd8NvMC6rvx8RITo",
+          "name": "OpenAi account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "base": {
+          "__rl": true,
+          "value": "appPSvSKdA6075xJC",
+          "mode": "list",
+          "cachedResultName": "Testing n8n",
+          "cachedResultUrl": "https://airtable.com/appPSvSKdA6075xJC"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tbl1KgkRF2EEMc2Fq",
+          "mode": "list",
+          "cachedResultName": "cold leads",
+          "cachedResultUrl": "https://airtable.com/appPSvSKdA6075xJC/tbl1KgkRF2EEMc2Fq"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "id": "={{ $('Search Cold Leads Without Icebreaker').item.json.id }}",
+            "Name": "={{ $('Search Cold Leads Without Icebreaker').item.json.Name }}",
+            "Website": "={{ $('Search Cold Leads Without Icebreaker').item.json.Website }}",
+            "Phone": "={{ $('Search Cold Leads Without Icebreaker').item.json.Phone }}",
+            "Ice breaker": "={{ $json.message.content.icebreaker }}",
+            "Email body": "={{ $json.message.content.email_body }}",
+            "website summary": "={{ $json.message.content.website_summary }}"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": false
+            },
+            {
+              "id": "Name",
+              "displayName": "Name",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Website",
+              "displayName": "Website",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Phone",
+              "displayName": "Phone",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Ice breaker",
+              "displayName": "Ice breaker",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "website summary",
+              "displayName": "website summary",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Email body",
+              "displayName": "Email body",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.1,
+      "position": [
+        960,
+        60
+      ],
+      "id": "05a2b673-8e2a-41cf-9a01-eb19b2e584ea",
+      "name": "Save AI Output Back to Airtable",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "H8PVkBgUPCcUhhRC",
+          "name": "Airtable Personal Access Token account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "### 🔄 Automated Cold Email Writing from Lead Websites\n\nThis workflow runs on a schedule and pulls new cold leads from Airtable that have no \"Ice breaker\" yet. For each lead, it waits briefly to prevent API overuse, then sends the lead’s website URL to Dumpling AI's scraping endpoint.\n\nThe scraped content is passed to GPT-4o to generate:\n- A personalized icebreaker\n- A website summary\n- A tailored cold email body\n\nFinally, all generated results are saved back into Airtable for each lead record.\n",
+        "height": 480,
+        "width": 810
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -640,
+        -260
+      ],
+      "typeVersion": 1,
+      "id": "cd8dac4b-6575-45fc-95fd-3052b244b0a2",
+      "name": "Sticky Note"
+    }
+  ],
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 0,
+  "updatedAt": "2025-06-11T01:09:28.000Z",
+  "versionId": "710a2065-24ec-4681-aaa4-43028ec8acee"
+}
