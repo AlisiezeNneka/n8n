@@ -1,0 +1,234 @@
+{
+  "active": false,
+  "connections": {
+    " Watch for New YouTube Video via RSS": {
+      "main": [
+        [
+          {
+            "node": "Get Transcript from YouTube Video using Dumpling AI",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Transcript from YouTube Video using Dumpling AI": {
+      "main": [
+        [
+          {
+            "node": "Transform Transcript into Podcast Script using GPT-4o",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Transform Transcript into Podcast Script using GPT-4o": {
+      "main": [
+        [
+          {
+            "node": "Save Podcast Script and Metadata to Airtable",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "createdAt": "2025-06-10T22:12:19.707Z",
+  "id": "I4j3HnFGPa5UWkIO",
+  "isArchived": false,
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "name": "Auto-Create Podcast from YouTube Video Transcript using Dumpling AI and GPT-4o",
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "feedUrl": "https://rss.app/feeds/Vw076Uzh7bIinpci.xml"
+      },
+      "type": "n8n-nodes-base.rssFeedReadTrigger",
+      "typeVersion": 1,
+      "position": [
+        -500,
+        -20
+      ],
+      "id": "d95bcf10-2bb4-4bfd-a8ad-4128a792deb8",
+      "name": " Watch for New YouTube Video via RSS"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://app.dumplingai.com/api/v1/get-youtube-transcript",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"videoUrl\": \"{{ $json.link }}\",\n  \"preferredLanguage\": \"en\"\n}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -280,
+        -20
+      ],
+      "id": "a5492dab-f400-48d9-abd7-6c832d9d6816",
+      "name": "Get Transcript from YouTube Video using Dumpling AI",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "RLFzAcGRepr5eXZB",
+          "name": "Dumpling AI-n8n"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "chatgpt-4o-latest",
+          "mode": "list",
+          "cachedResultName": "CHATGPT-4O-LATEST"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=Instructions:\nYou are a professional transcript editor and podcast summarizer. For the transcript below, complete these tasks:\n\nLabel each speaker (e.g., Speaker 1:) and remove all filler words such as \"um,\" \"uh,\" \"you know,\" \"like,\" \"basically,\" \"actually,\" \"so.\"\n\nCombine the cleaned speaker labels and their text into one single string, clearly formatted.\n\nSummarize the key points of the conversation in 2–4 concise sentences.\n\nExtract or infer a short, relevant title based on the content.\n\nReturn your response strictly in the following JSON format:\n{\n  \"title\": \"Relevant podcast title here\",\n  \"cleaned_transcript\": \"Speaker 1: Cleaned text. Speaker 2: Cleaned text. (Continue in this format.)\",\n  \"summary\": \"Concise summary of the key points here.\"\n}",
+              "role": "system"
+            },
+            {
+              "content": "=\nHere’s the transcript:{{ $json.transcript }}"
+            }
+          ]
+        },
+        "jsonOutput": true,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        -60,
+        -20
+      ],
+      "id": "bce2bb18-c9ee-4165-ac27-5d300e354c7e",
+      "name": "Transform Transcript into Podcast Script using GPT-4o",
+      "credentials": {
+        "openAiApi": {
+          "id": "dd8NvMC6rvx8RITo",
+          "name": "OpenAi account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "create",
+        "base": {
+          "__rl": true,
+          "value": "appPSvSKdA6075xJC",
+          "mode": "list",
+          "cachedResultName": "Testing n8n",
+          "cachedResultUrl": "https://airtable.com/appPSvSKdA6075xJC"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tbl4MDOqdNZweqXU9",
+          "mode": "list",
+          "cachedResultName": "podcast",
+          "cachedResultUrl": "https://airtable.com/appPSvSKdA6075xJC/tbl4MDOqdNZweqXU9"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Title": "={{ $json.message.content.title }}",
+            "podcast transcript": "={{ $json.message.content.cleaned_transcript }}",
+            "summary": "={{ $json.message.content.summary }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Title",
+              "displayName": "Title",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "podcast transcript",
+              "displayName": "podcast transcript",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "summary",
+              "displayName": "summary",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.1,
+      "position": [
+        300,
+        -20
+      ],
+      "id": "7782b5a6-c842-41be-a5c5-9eaa28a0abd0",
+      "name": "Save Podcast Script and Metadata to Airtable",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "H8PVkBgUPCcUhhRC",
+          "name": "Airtable Personal Access Token account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "### 🎙️ Auto-Create Podcast Script from YouTube Videos\n\nThis workflow starts by monitoring a YouTube RSS feed for new uploads. Once a new video is detected, Dumpling AI extracts the full transcript. GPT-4o then converts that transcript into a well-formatted podcast script, ensuring it’s clean, structured, and engaging. The final script along with the video title and summary is saved into Airtable, where it can be reviewed, edited, or used to produce an actual podcast episode.\n\nIdeal for creators repurposing video content into audio format.\n",
+        "height": 280,
+        "width": 640
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -500,
+        -220
+      ],
+      "typeVersion": 1,
+      "id": "af143efd-be64-48fc-a405-173575289ed3",
+      "name": "Sticky Note"
+    }
+  ],
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 0,
+  "updatedAt": "2025-06-11T01:09:20.000Z",
+  "versionId": "0c39768f-93c9-42d7-8b9f-ca4e0ede2312"
+}
