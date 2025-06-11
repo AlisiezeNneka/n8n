@@ -1,0 +1,81 @@
+{
+  "active": false,
+  "connections": {
+    "When clicking ‘Test workflow’": {
+      "main": [
+        [
+          {
+            "node": "GitHub",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "createdAt": "2025-06-04T17:25:50.703Z",
+  "id": "tsjoh0aINGeGBGts",
+  "isArchived": false,
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "name": "delete file from Github",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -280,
+        -60
+      ],
+      "id": "5073d82d-b440-4446-a58f-eb5427791287",
+      "name": "When clicking ‘Test workflow’"
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "resource": "file",
+        "operation": "delete",
+        "owner": {
+          "__rl": true,
+          "value": "AlisiezeNneka",
+          "mode": "name"
+        },
+        "repository": {
+          "__rl": true,
+          "value": "n8n",
+          "mode": "list",
+          "cachedResultName": "n8n",
+          "cachedResultUrl": "https://github.com/AlisiezeNneka/n8n"
+        },
+        "filePath": "myn8n/nV6rcOMxZbav7T3h.json",
+        "commitMessage": "Delete outdated script file"
+      },
+      "type": "n8n-nodes-base.github",
+      "typeVersion": 1.1,
+      "position": [
+        -60,
+        -60
+      ],
+      "id": "069d1564-7967-470a-a732-d0cd07555040",
+      "name": "GitHub",
+      "webhookId": "7e481884-1588-4c78-881d-3a713ec39418",
+      "credentials": {
+        "githubOAuth2Api": {
+          "id": "9NopWLEA2cPHD9B6",
+          "name": "GitHub account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 0,
+  "updatedAt": "2025-06-04T17:31:04.000Z",
+  "versionId": "2f352d13-1d88-468b-a118-b84efdef985b"
+}
