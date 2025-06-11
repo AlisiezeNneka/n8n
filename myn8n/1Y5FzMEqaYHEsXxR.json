@@ -181,8 +181,8 @@
       "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
       "typeVersion": 1.2,
       "position": [
-        -540,
-        100
+        -400,
+        80
       ],
       "id": "96f68697-8ef2-42a7-b9ef-10044cac2b0a",
       "name": "Enable GPT-4o for LangChain Agent",
@@ -401,6 +401,6 @@
   "staticData": null,
   "tags": [],
   "triggerCount": 0,
-  "updatedAt": "2025-06-03T00:52:53.000Z",
-  "versionId": "5208235f-4bc6-417c-8a38-2bc92b7a75f9"
+  "updatedAt": "2025-06-05T20:42:15.000Z",
+  "versionId": "db6dbd07-4d56-4783-a523-c5ffeb403605"
 }
