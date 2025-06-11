@@ -1,0 +1,484 @@
+{
+  "active": false,
+  "connections": {
+    "Run on Schedule (Daily)": {
+      "main": [
+        [
+          {
+            "node": "Fetch Topics with Empty Commentary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Topics with Empty Commentary": {
+      "main": [
+        [
+          {
+            "node": "Loop Through Each Topic",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Through Each Topic": {
+      "main": [
+        [
+          {
+            "node": "No Operation, do nothing",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Wait Before News Search",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait Before News Search": {
+      "main": [
+        [
+          {
+            "node": "Search News with Dumpling AI",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search News with Dumpling AI": {
+      "main": [
+        [
+          {
+            "node": "Split Returned News Articles",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Returned News Articles": {
+      "main": [
+        [
+          {
+            "node": "Scrape Article Content with Dumpling AI",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Scrape Article Content with Dumpling AI": {
+      "main": [
+        [
+          {
+            "node": "Aggregate Scraped Article Content",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate Scraped Article Content": {
+      "main": [
+        [
+          {
+            "node": "Clean Article Content",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Clean Article Content": {
+      "main": [
+        [
+          {
+            "node": "Generate LinkedIn Commentary (GPT-4o)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate LinkedIn Commentary (GPT-4o)": {
+      "main": [
+        [
+          {
+            "node": "Append Commentary Back to Sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append Commentary Back to Sheet": {
+      "main": [
+        [
+          {
+            "node": "Loop Through Each Topic",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "createdAt": "2025-06-11T00:03:43.334Z",
+  "id": "M8PPLx0heLyG4kmQ",
+  "isArchived": false,
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "name": "Auto-Generate AI News Commentary with Dumpling AI and GPT-4o",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        -420,
+        -160
+      ],
+      "id": "35ce9dd5-cc21-4cf9-a7ac-6cc9718fa86a",
+      "name": "No Operation, do nothing"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {}
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -1080,
+        -60
+      ],
+      "id": "c572b2c3-9e72-4d7d-89f9-364aa5c00f79",
+      "name": "Run on Schedule (Daily)"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1rCXEWnIZd6cKIqsVRRynHEygQTztJM76rm4HM8Xlqbw",
+          "mode": "list",
+          "cachedResultName": "News articles",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1rCXEWnIZd6cKIqsVRRynHEygQTztJM76rm4HM8Xlqbw/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1rCXEWnIZd6cKIqsVRRynHEygQTztJM76rm4HM8Xlqbw/edit#gid=0"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "generated commentary"
+            }
+          ]
+        },
+        "options": {
+          "returnFirstMatch": true
+        }
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        -860,
+        -60
+      ],
+      "id": "412b5965-1278-4748-8d77-4c85d9eb9cff",
+      "name": "Fetch Topics with Empty Commentary",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "GaJqJHuS5mQxap7q",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        -640,
+        -60
+      ],
+      "id": "c04e7811-4e30-4e68-8342-55d79669072e",
+      "name": "Loop Through Each Topic"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        -420,
+        40
+      ],
+      "id": "435798d5-59b3-4379-831a-9b8801a99f38",
+      "name": "Wait Before News Search",
+      "webhookId": "2f67769b-0637-4b7e-9324-f8ba9520969c"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://app.dumplingai.com/api/v1/search-news",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"query\": \"{{ $json.Topic }}\",\n  \"country\": \"US\",\n  \"page\": 3,\n  \"language\": \"en\"\n}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -200,
+        40
+      ],
+      "id": "f0098d01-fa3b-40e8-aeeb-e9dd31606ddb",
+      "name": "Search News with Dumpling AI",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "RLFzAcGRepr5eXZB",
+          "name": "Dumpling AI-n8n"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "news",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        20,
+        40
+      ],
+      "id": "43862942-4e19-4856-a3b0-2546d8a7a462",
+      "name": "Split Returned News Articles"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://app.dumplingai.com/api/v1/scrape",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"url\": \"{{ $json.link}}\"\n}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        240,
+        40
+      ],
+      "id": "9b45eb16-66b1-45bc-b4a3-5ad46696b295",
+      "name": "Scrape Article Content with Dumpling AI",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "RLFzAcGRepr5eXZB",
+          "name": "Dumpling AI-n8n"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "fieldsToAggregate": {
+          "fieldToAggregate": [
+            {
+              "fieldToAggregate": "content"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        460,
+        40
+      ],
+      "id": "ffa392af-04d1-4c6a-a05e-f63f765d7eca",
+      "name": "Aggregate Scraped Article Content"
+    },
+    {
+      "parameters": {
+        "jsCode": "let rawContent = $input.first().json.content;\n\n// If content is not a string, try to stringify it\nif (typeof rawContent !== 'string') {\n  rawContent = JSON.stringify(rawContent);\n}\n\nconst cleaned = rawContent\n  .replace(/https?:\\/\\/[^\\s]+/g, '')           // Remove full URLs\n  .replace(/www\\.[^\\s]+/g, '')                  // Remove www links\n  .replace(/\\[([^\\]]+)\\]\\(([^)]+)\\)/g, '$1')    // Remove markdown links\n  .replace(/<a[^>]*>(.*?)<\\/a>/gi, '$1')        // Remove HTML anchor tags\n  .replace(/\\s{2,}/g, ' ')                      // Remove extra spaces\n  .trim();\n\nreturn [{\n  json: {\n    cleaned_content: cleaned\n  }\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        680,
+        40
+      ],
+      "id": "5204f7c9-e5f8-4594-9428-4b46e92ba81d",
+      "name": "Clean Article Content"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "chatgpt-4o-latest",
+          "mode": "list",
+          "cachedResultName": "CHATGPT-4O-LATEST"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=You are a thought leader on LinkedIn. I will provide you with a news articles related to {{ $('Fetch Topics with Empty Commentary').item.json.Topic }}, and you will write a personal commentary in a confident, insightful, first-person voice.\n\nYour response should:\n- Start with a strong personal opinion or observation\n- Briefly connect the news to real-world trends or implications\n- Mention how this relates to your work, experience, or thinking\n- Use a human tone, no robotic phrasing or generic statements\n- End with a question or call to action to invite engagement\n\nKeep it under 600 characters. Avoid buzzwords or fluff. Be authentic.\n\nHere are the news articles:{{ $json.cleaned_content }}\n"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        900,
+        40
+      ],
+      "id": "04fe4476-023b-49a5-8e72-0d251d78ae1a",
+      "name": "Generate LinkedIn Commentary (GPT-4o)",
+      "credentials": {
+        "openAiApi": {
+          "id": "dd8NvMC6rvx8RITo",
+          "name": "OpenAi account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "1rCXEWnIZd6cKIqsVRRynHEygQTztJM76rm4HM8Xlqbw",
+          "mode": "list",
+          "cachedResultName": "News articles",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1rCXEWnIZd6cKIqsVRRynHEygQTztJM76rm4HM8Xlqbw/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1rCXEWnIZd6cKIqsVRRynHEygQTztJM76rm4HM8Xlqbw/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Topic": "={{ $('Fetch Topics with Empty Commentary').item.json.Topic }}",
+            "generated commentary": "={{ $json.message.content }}"
+          },
+          "matchingColumns": [
+            "Topic"
+          ],
+          "schema": [
+            {
+              "id": "Topic",
+              "displayName": "Topic",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "generated commentary",
+              "displayName": "generated commentary",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Image",
+              "displayName": "Image",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        1260,
+        40
+      ],
+      "id": "ecc25fb7-52c0-4b89-94eb-06088b92e095",
+      "name": "Append Commentary Back to Sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "GaJqJHuS5mQxap7q",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "### 📥 Fetch Topics and Search News via Dumpling AI\n\nThis section starts with a scheduled trigger. It pulls entries from a Google Sheet where the “generated commentary” is empty, meaning the topic hasn’t been processed. Each topic is looped individually. A short wait is applied to manage rate limits. Dumpling AI’s `/search-news` endpoint is then triggered to retrieve relevant articles based on the topic keyword.\n",
+        "height": 340,
+        "width": 1100
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -1100,
+        -260
+      ],
+      "typeVersion": 1,
+      "id": "62e5001b-0aa9-40eb-bf65-6ca6ff1e3b32",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "### ✍️ Scrape Articles, Clean Text, Generate Commentary, and Append\n\nEach article is split out and scraped using Dumpling AI’s `/scrape` endpoint to get full content. The aggregated content is cleaned via a Code node, removing links and excess formatting. GPT-4o generates a LinkedIn-style first-person commentary using this cleaned content. The final output is saved back to the Google Sheet under the “generated commentary” field.\n",
+        "height": 360,
+        "width": 1120
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        240,
+        -280
+      ],
+      "typeVersion": 1,
+      "id": "3c3904a5-90d3-486a-8f69-bb6b33b5d234",
+      "name": "Sticky Note1"
+    }
+  ],
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 0,
+  "updatedAt": "2025-06-11T01:09:47.000Z",
+  "versionId": "2f3ec71f-7ba1-46bf-bbd3-633a9e526a47"
+}
