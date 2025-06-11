@@ -273,7 +273,7 @@
         "promptType": "define",
         "text": "={{ $json.text }}",
         "options": {
-          "systemMessage": "=You are a support assistant for a beauty salon. You must answer customer enquiries using only the information retrieved from the connected knowledgebase. Always perform a retrieval query to fetch relevant data before generating a response.\n\nInstructions:\n\nUse only the retrieved knowledgebase content to respond. Do not generate answers from general knowledge or assumptions.\n\nIf relevant information is found, provide a clear, friendly, and helpful reply using that content.\n\nIf the answer cannot be found in the retrieved context, respond with:\n“Thank you for your message. A representative will reach out to you with a reply shortly.”\n\nDo not reference the knowledgebase, database, retrieval process, or system logic in your response to the user.\n\nKeep your tone warm, professional, and concise. Stay aligned with salon communication style.\n\nlastly, provide only the response body, no subject line \n\nYour job is to assist only with accurate, verified information from the knowledgebase. If something is not covered, escalate politely.\n\n\n\n\n\n\n\n\n"
+          "systemMessage": "=You are a support assistant for a beauty salon. You must answer customer enquiries using the information retrieved from the connected knowledgebase. Always perform a retrieval query to fetch relevant data before generating a response.\n\nInstructions:\n\nUse the retrieved knowledgebase content to respond. Do not generate answers from general knowledge or assumptions.\n\nIf relevant information is found, provide a clear, friendly, and helpful reply using that content.\n\nIf the answer cannot be found in the retrieved context, respond with:\n“Thank you for your message. A representative will reach out to you with a reply shortly.”\n\nDo not reference the knowledgebase, database, retrieval process, or system logic in your response to the user.\n\nKeep your tone warm, professional, and concise. Stay aligned with salon communication style.\n\nlastly, provide only the response body, no subject line \n\nYour job is to assist only with accurate, verified information from the knowledgebase. If something is not covered, escalate politely.\n\n\n\n\n\n\n\n\n"
         }
       },
       "type": "@n8n/n8n-nodes-langchain.agent",
@@ -293,7 +293,7 @@
           "value": "gpt-4o-mini"
         },
         "options": {
-          "temperature": 0.4
+          "temperature": 0.7
         }
       },
       "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
@@ -369,8 +369,8 @@
       },
       "type": "n8n-nodes-base.stickyNote",
       "position": [
-        -1840,
-        -380
+        -1900,
+        -420
       ],
       "typeVersion": 1,
       "id": "b28daad1-901d-49e6-a2fb-ff3693dfc507",
@@ -390,10 +390,15 @@
           "19735ee467c772fa"
         ]
       }
+    },
+    "node:Monitor Gmail Inbox for New Emails": {
+      "Monitor Gmail Inbox for New Emails": {
+        "lastTimeChecked": 1749086795
+      }
     }
   },
   "tags": [],
   "triggerCount": 1,
-  "updatedAt": "2025-06-04T16:17:45.000Z",
-  "versionId": "d843f3e8-da0f-4406-a563-c3f5746ed6e1"
+  "updatedAt": "2025-06-05T01:26:39.000Z",
+  "versionId": "47edc6c2-f443-439d-b221-b5de62feb029"
 }
