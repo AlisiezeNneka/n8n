@@ -27,7 +27,7 @@
       "main": [
         [
           {
-            "node": "No Operation, do nothing",
+            "node": "Edit Fields",
             "type": "main",
             "index": 0
           }
@@ -84,6 +84,11 @@
           }
         ]
       ]
+    },
+    "Edit Fields": {
+      "main": [
+        []
+      ]
     }
   },
   "createdAt": "2025-06-10T23:26:42.176Z",
@@ -94,17 +99,6 @@
   },
   "name": "AI Icebreaker Builder: Scrape Sites with Dumpling AI and Save to Airtable",
   "nodes": [
-    {
-      "parameters": {},
-      "type": "n8n-nodes-base.noOp",
-      "typeVersion": 1,
-      "position": [
-        100,
-        -140
-      ],
-      "id": "40c158ab-6e9c-4296-873c-c879714b65a6",
-      "name": "No Operation, do nothing"
-    },
     {
       "parameters": {
         "rule": {
@@ -175,8 +169,8 @@
       "type": "n8n-nodes-base.wait",
       "typeVersion": 1.1,
       "position": [
-        100,
-        60
+        180,
+        100
       ],
       "id": "78b197e2-6028-49a0-9100-5cc44838a9cd",
       "name": "Wait Before Making Request",
@@ -196,7 +190,7 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        320,
+        540,
         60
       ],
       "id": "de96d330-006b-4410-8b75-83c3b9658045",
@@ -233,7 +227,7 @@
       "type": "@n8n/n8n-nodes-langchain.openAi",
       "typeVersion": 1.8,
       "position": [
-        540,
+        760,
         60
       ],
       "id": "5d5675b6-4245-4562-a9d2-7cf54fe20b75",
@@ -362,7 +356,7 @@
       "type": "n8n-nodes-base.airtable",
       "typeVersion": 2.1,
       "position": [
-        960,
+        1120,
         60
       ],
       "id": "05a2b673-8e2a-41cf-9a01-eb19b2e584ea",
@@ -382,12 +376,25 @@
       },
       "type": "n8n-nodes-base.stickyNote",
       "position": [
-        -640,
-        -260
+        480,
+        -600
       ],
       "typeVersion": 1,
       "id": "cd8dac4b-6575-45fc-95fd-3052b244b0a2",
       "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        100,
+        -40
+      ],
+      "id": "e93dbc94-6739-4eae-931c-5cd01419b13d",
+      "name": "Edit Fields"
     }
   ],
   "pinData": {},
@@ -397,6 +404,6 @@
   "staticData": null,
   "tags": [],
   "triggerCount": 0,
-  "updatedAt": "2025-06-11T01:09:28.000Z",
-  "versionId": "710a2065-24ec-4681-aaa4-43028ec8acee"
+  "updatedAt": "2025-06-16T22:14:16.000Z",
+  "versionId": "756d8a50-c2a4-4b7d-ab95-73572748565e"
 }
