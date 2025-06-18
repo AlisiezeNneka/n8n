@@ -114,7 +114,7 @@
       "type": "@n8n/n8n-nodes-langchain.openAi",
       "typeVersion": 1.8,
       "position": [
-        -60,
+        -100,
         -20
       ],
       "id": "bce2bb18-c9ee-4165-ac27-5d300e354c7e",
@@ -214,8 +214,8 @@
       },
       "type": "n8n-nodes-base.stickyNote",
       "position": [
-        -500,
-        -220
+        -520,
+        -240
       ],
       "typeVersion": 1,
       "id": "af143efd-be64-48fc-a405-173575289ed3",
@@ -229,6 +229,6 @@
   "staticData": null,
   "tags": [],
   "triggerCount": 0,
-  "updatedAt": "2025-06-11T01:09:20.000Z",
-  "versionId": "0c39768f-93c9-42d7-8b9f-ca4e0ede2312"
+  "updatedAt": "2025-06-16T21:21:37.000Z",
+  "versionId": "846c499f-5967-4698-ad22-ca96d5453d55"
 }
