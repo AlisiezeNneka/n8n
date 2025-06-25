@@ -1,0 +1,21 @@
+{
+  "active": false,
+  "connections": {},
+  "createdAt": "2025-06-21T15:07:02.442Z",
+  "id": "q0xfVRZaKTbcmAIp",
+  "isArchived": false,
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "name": "My workflow 11",
+  "nodes": [],
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 0,
+  "updatedAt": "2025-06-25T22:59:34.000Z",
+  "versionId": "c4ad0cdd-ff7d-4c3f-8268-a16a95fc5a3a"
+}
