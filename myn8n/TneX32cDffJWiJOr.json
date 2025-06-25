@@ -336,7 +336,7 @@
     },
     {
       "parameters": {
-        "sendTo": "nalisieze@gmail.com",
+        "sendTo": "example@gmail.com",
         "subject": "News Data Successfully Updated in Spreadsheet",
         "emailType": "text",
         "message": "=Hi Nneka,  \n\nThe latest news articles have been successfully fetched and populated into the spreadsheet. Everything ran smoothly and the data is now available for review or next steps.  \n\nYou can go ahead and check the sheet for updates.  If you want to trigger another run or automate the next process, everything is ready.",
@@ -3151,6 +3151,6 @@
   "staticData": null,
   "tags": [],
   "triggerCount": 0,
-  "updatedAt": "2025-06-18T02:04:01.000Z",
-  "versionId": "444d3140-66db-4f41-a2b1-744a3432f8b7"
+  "updatedAt": "2025-06-19T20:04:27.000Z",
+  "versionId": "b3dd5aec-5b5f-4699-8f9e-e213ea1da444"
 }
