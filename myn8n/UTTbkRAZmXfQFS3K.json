@@ -1,0 +1,894 @@
+{
+  "active": false,
+  "connections": {
+    " Form: User Submission": {
+      "main": [
+        [
+          {
+            "node": "Format into an Array ",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format into an Array ": {
+      "main": [
+        [
+          {
+            "node": "Split: Loop Through Array",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split: Loop Through Array": {
+      "main": [
+        [
+          {
+            "node": "GPT-4: Create Cinematic Prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GPT-4: Create Cinematic Prompt": {
+      "main": [
+        [
+          {
+            "node": " Clean: Remove Line Breaks from Prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    " Clean: Remove Line Breaks from Prompt": {
+      "main": [
+        [
+          {
+            "node": " Dumpling AI: Generate Image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    " Dumpling AI: Generate Image": {
+      "main": [
+        [
+          {
+            "node": "GPT-4: Create motion prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GPT-4: Create motion prompt": {
+      "main": [
+        [
+          {
+            "node": "Leonardo: Create Motion Video",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Leonardo: Create Motion Video": {
+      "main": [
+        [
+          {
+            "node": "Wait: Leonardo Processing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait: Leonardo Processing": {
+      "main": [
+        [
+          {
+            "node": " Fetch: Download Motion Video ",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    " Fetch: Download Motion Video ": {
+      "main": [
+        [
+          {
+            "node": " Merge: Combine Videos & Audio Branch",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Limit: One Audio Track Per Run",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Limit: One Audio Track Per Run": {
+      "main": [
+        [
+          {
+            "node": "GPT-4: Generate Audio Prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GPT-4: Generate Audio Prompt": {
+      "main": [
+        [
+          {
+            "node": "ElevenLabs: Create Ambient Soundtrack",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "ElevenLabs: Create Ambient Soundtrack": {
+      "main": [
+        [
+          {
+            "node": "Upload: Save Audio to Google Drive",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upload: Save Audio to Google Drive": {
+      "main": [
+        [
+          {
+            "node": "Share: Make Audio Public",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Share: Make Audio Public": {
+      "main": [
+        [
+          {
+            "node": " Merge: Combine Videos & Audio Branch",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    " Merge: Combine Videos & Audio Branch": {
+      "main": [
+        [
+          {
+            "node": " Format Motion Video URLs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    " Format Motion Video URLs": {
+      "main": [
+        [
+          {
+            "node": "Creatomate: Combine Videos & Audio",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Creatomate: Combine Videos & Audio": {
+      "main": [
+        [
+          {
+            "node": "Wait: Creatomate Rendering",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait: Creatomate Rendering": {
+      "main": [
+        [
+          {
+            "node": "Download: Final MP4 from Creatomate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download: Final MP4 from Creatomate": {
+      "main": [
+        [
+          {
+            "node": "Upload: Save Final Video to Drive",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upload: Save Final Video to Drive": {
+      "main": [
+        [
+          {
+            "node": "Log: Add Video Title & Link to Sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "createdAt": "2025-06-21T14:05:21.470Z",
+  "id": "UTTbkRAZmXfQFS3K",
+  "isArchived": false,
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "name": "Auto-Generate Cinematic Animal Videos & Sound from Form using Dumpling AI",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "### 🟨 Sticky Notes for Workflow: Create Cinematic Animal Videos & Audio\n\n🟡 **Trigger: Form Submission**  \nStarts when a user fills out a form with a title, 4 animals, and a visual style.\n\n🟡 **Format Inputs**  \nPrepares animal inputs as an array and pulls the selected style for processing.\n\n🟡 **Generate Cinematic Prompts (OpenAI)**  \nEach animal is transformed into a cinematic, first-person prompt using GPT-4.\n\n🟡 **Create AI Image (Dumpling AI)**  \nEach prompt is sent to Dumpling AI to generate a high-quality AI image.\n\n🟡 **Motion Prompt for Video (OpenAI)**  \nThe image prompt is rewritten into a motion video prompt with natural movements.\n\n🟡 **Generate Motion Video (Leonardo)**  \nLeonardo AI turns each image into a short animated video clip using the motion prompt.\n\n🟡 **Generate Audio Prompt (OpenAI)**  \nGPT-4 generates a vivid sound prompt based on the style.\n\n🟡 **Create Ambient Sound (ElevenLabs)**  \nThe sound prompt is used to generate a 20-second ambient audio file.\n\n🟡 **Upload Audio to Drive**  \nThe generated .mp3 is saved to a Google Drive folder and made shareable.\n\n🟡 **Merge Videos and Audio (Creatomate)**  \nAll videos and audio are stitched into a single cinematic video with text overlays.\n\n🟡 **Upload Final Video**  \nThe completed video is uploaded to Google Drive in the “AI generated Videos” folder.\n\n🟡 **Log Output to Sheet**  \nVideo title and share link are logged into Google Sheets for future access.\n",
+        "height": 920,
+        "width": 1700
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        2860,
+        -2240
+      ],
+      "typeVersion": 1,
+      "id": "84bfaa76-c4ff-40d7-8bfc-c8e8db13ab78",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "formTitle": "Content ",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Title",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "animal 1",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "animal 2",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "animal 3"
+            },
+            {
+              "fieldLabel": "animal 4",
+              "requiredField": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.2,
+      "position": [
+        1280,
+        -1780
+      ],
+      "id": "f93eb54b-8d04-4e1a-ac60-4fa273a61974",
+      "name": " Form: User Submission",
+      "webhookId": "27a461aa-7306-4c89-b562-ff239197ae35"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "bd9cd00c-976b-4a94-8a43-e7a01993ff44",
+              "name": "animals",
+              "value": "=[\"{{ $json['animal 1'] }}\",\"{{ $json['animal 2'] }}\",\"{{ $json['animal 3'] }}\",\"{{ $json['animal 4'] }}\"]",
+              "type": "array"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1500,
+        -1780
+      ],
+      "id": "c93adf81-d657-4e5e-bba3-d6eb093c8fcb",
+      "name": "Format into an Array "
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "animals",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        1720,
+        -1780
+      ],
+      "id": "5940e19d-23f7-4b87-9373-6cf9c6c3d5d7",
+      "name": "Split: Loop Through Array"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4.1",
+          "mode": "list",
+          "cachedResultName": "GPT-4.1"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=Task:\nYou are an advanced AI that transforms a country name or an animal into a vivid, cinematic prompt meant for image generation only. The visual should depict a powerful, mythical warrior with the head of a symbolic animal, walking slowly and majestically toward the viewer. The scene must reflect the cultural essence of the country or the natural environment of the animal.\n\nRules for Output Generation:\n\nFocus on front-facing, full-body motion in a slow, majestic walk\n\nThe warrior should be muscular, highly detailed, and visually dominant\n\nAdd motion details like cape flow, weapon movement, foot pressure\n\nFor country input: use accurate terrain, architecture, weather, and mood\n\nFor animal input: use the animal’s natural habitat as the setting\n\nBackground must be slightly blurred for cinematic depth\n\nOutput must be in plain text, no JSON\n\nKeep each output below 950 characters\n\nDo not generate video prompts\n\n🔻 Input Format Examples:\nmakefile\nCopy\nEdit\nInput: Morocco, Brazil, Japan, Nigeria  \nInput: Tiger, Eagle, Gorilla, Falcon\n\n🔻 Output Format Example :\nInput: Morocco\nWalking with slow, thunderous steps across an ancient desert courtyard, a lion-headed warrior with golden fur and scarred bronze armor moves toward the viewer. His black cape ripples in the hot wind, dust kicking around his armored sandals. Muscles flex under leather carved with Berber motifs, and a curved blade glints at his hip. Behind him, the blurred kasbah walls glow under orange sunlight, casting long shadows across the tiled ground.\n\n\n",
+              "role": "system"
+            },
+            {
+              "content": "=Country: {{ $json.animals }}\n"
+            },
+            {
+              "content": "It is is very important to note that the prompt must not exceed 950 characters",
+              "role": "system"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        1940,
+        -1780
+      ],
+      "id": "112610e5-d6ef-400a-8e43-1a55e93e269e",
+      "name": "GPT-4: Create Cinematic Prompt",
+      "credentials": {
+        "openAiApi": {
+          "id": "fdhWALG84tBLgSZT",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "629e44a0-0d8d-40de-ab7b-8c93de23887e",
+              "name": "prompt",
+              "value": "={{ $json.message.content.replace(/\\n/g, ' ').replace(/\\\\n/g, ' ') }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2320,
+        -1780
+      ],
+      "id": "3fc20348-f6d8-49e1-8e5a-484de33c17f4",
+      "name": " Clean: Remove Line Breaks from Prompt"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://app.dumplingai.com/api/v1/generate-ai-image",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "accept",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"FLUX.1-pro\",\n  \"input\": {\n    \"prompt\": \"{{$json.prompt}}\"\n  }\n}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2520,
+        -1780
+      ],
+      "id": "471696d3-a451-4ccc-bb4f-801dfc3f5ac1",
+      "name": " Dumpling AI: Generate Image",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "RLFzAcGRepr5eXZB",
+          "name": "Dumpling AI-n8n"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4.1",
+          "mode": "list",
+          "cachedResultName": "GPT-4.1"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=You are helping me generate a motion video prompt based on a previous image generation prompt.\n\nI will provide the image prompt, and your job is to rewrite it so it can be used to create a motion video using Leonardo.ai.\n\nYour output must follow these rules:\n\nKeep the subject, style, and atmosphere from the original image prompt\n\nAdd natural motion elements (such as camera pan, slow zoom, blinking, fog moving, flickering lights, etc)\n\nWrite in a descriptive cinematic tone\n\nKeep the response short, between 1 to 2 sentences\n\nReturn only the rewritten motion prompt as plain text\n\nEnsure the output includes a line break at the end\n\nExample input:\n\"A black cat sitting on a haunted piano in a dark room, ghostly ambiance, cinematic style\"\n\nExample output:\n\"A black cat blinking slowly as ghostly light flickers across the haunted piano, the camera pans slowly, cinematic mood\"",
+              "role": "system"
+            },
+            {
+              "content": "=Now, generate a motion video prompt from this image prompt:{{ $(' Clean: Remove Line Breaks from Prompt').item.json.prompt }}\n"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        1360,
+        -1520
+      ],
+      "id": "50e89d3c-62b3-4689-84ca-1bc7cff445c3",
+      "name": "GPT-4: Create motion prompt",
+      "credentials": {
+        "openAiApi": {
+          "id": "dd8NvMC6rvx8RITo",
+          "name": "OpenAi account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://cloud.leonardo.ai/api/rest/v1/generations-image-to-video",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "accept",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"imageType\": \"GENERATED\",\n  \"isPublic\": false,\n  \"resolution\": \"RESOLUTION_480\",\n  \"imageId\": \"{{ $('HTTP Request1').item.json.generations_by_pk.generated_images[0].id }}\",\n  \"prompt\": \"{{$json.message.content}}\",\n  \"frameInterpolation\": true,\n  \"promptEnhance\": true\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1800,
+        -1520
+      ],
+      "id": "e4705605-ea57-4e54-a859-d9df579a6f1f",
+      "name": "Leonardo: Create Motion Video",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "5HxEovg6BGS53MXG",
+          "name": "Leonardo"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "amount": 60
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        2060,
+        -1520
+      ],
+      "id": "a05020bc-e914-45b4-b9fb-52bf996d6c76",
+      "name": "Wait: Leonardo Processing",
+      "webhookId": "b1658720-27be-47a2-8bca-9c3c97d1e998"
+    },
+    {
+      "parameters": {
+        "url": "=https://cloud.leonardo.ai/api/rest/v1/generations/{{ $json.motionVideoGenerationJob.generationId }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2320,
+        -1520
+      ],
+      "id": "2939324b-7964-48a4-9b83-304c8635d427",
+      "name": " Fetch: Download Motion Video ",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "5HxEovg6BGS53MXG",
+          "name": "Leonardo"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.limit",
+      "typeVersion": 1,
+      "position": [
+        1320,
+        -1240
+      ],
+      "id": "5a9a433e-d2a6-4359-adcd-ca19357af660",
+      "name": "Limit: One Audio Track Per Run"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4.1",
+          "mode": "list",
+          "cachedResultName": "GPT-4.1"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=# Overview\nYou are a master sound prompt generator. Given a style, generate a vivid one-to-two sentence prompt that describes the ambiance, tone, and key sound elements to create an immersive audio scene. Use evocative language to capture the essence of the style.\n\n## Example\n- Style: Haunted Ghost Hunters\n- Output: Eerie whispers echo through a decaying mansion as floorboards creak under cautious footsteps. A distant, distorted radio crackles with ghostly voices, while a cold wind howls through shattered windows.\n",
+              "role": "system"
+            },
+            {
+              "content": "=Style: {{ $(' Form: User Submission').item.json['Style '] }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        1540,
+        -1240
+      ],
+      "id": "b2f54f28-ee3d-4614-9d55-8df3514580dc",
+      "name": "GPT-4: Generate Audio Prompt",
+      "credentials": {
+        "openAiApi": {
+          "id": "dd8NvMC6rvx8RITo",
+          "name": "OpenAi account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.elevenlabs.io/v1/sound-generation",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "text",
+              "value": "={{ $json.message.content }}"
+            },
+            {
+              "name": "duration_seconds",
+              "value": "20"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1920,
+        -1240
+      ],
+      "id": "2e804af2-57cd-4650-b42e-fba4fa6d0ff7",
+      "name": "ElevenLabs: Create Ambient Soundtrack",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "8vGHNTs5njnF7ALg",
+          "name": "11 labs"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "name": "={{ $(' Form: User Submission').item.json.Title }}.mp3",
+        "driveId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "My Drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "1jQbim9szMicI6kVQwRBMGonQ4BuQOIQ0",
+          "mode": "list",
+          "cachedResultName": "Soundtrack",
+          "cachedResultUrl": "https://drive.google.com/drive/folders/1jQbim9szMicI6kVQwRBMGonQ4BuQOIQ0"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        2120,
+        -1240
+      ],
+      "id": "73123bf5-4638-4a1b-ba47-8b1f7fa8fa3a",
+      "name": "Upload: Save Audio to Google Drive",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "B0Hulh0j065xznhI",
+          "name": "nnekajennifer"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "share",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $json.id }}",
+          "mode": "id"
+        },
+        "permissionsUi": {
+          "permissionsValues": {
+            "role": "reader",
+            "type": "anyone",
+            "allowFileDiscovery": true
+          }
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        2340,
+        -1240
+      ],
+      "id": "8ba1fb81-4638-43bb-af61-06c60f8fbfd2",
+      "name": "Share: Make Audio Public",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "B0Hulh0j065xznhI",
+          "name": "nnekajennifer"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineAll",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.1,
+      "position": [
+        2920,
+        -1500
+      ],
+      "id": "c1037dda-1f1d-4588-bec2-8af17d6a5dfc",
+      "name": " Merge: Combine Videos & Audio Branch"
+    },
+    {
+      "parameters": {
+        "jsCode": "const urlArray = [];\n\nfor (const item of items) {\n  const data = item.json;\n\n  const image = data.generations_by_pk?.generated_images?.[0];\n\n  if (image?.motionMP4URL) {\n    urlArray.push({\n      motionMP4URL: image.motionMP4URL,\n      imageId: image.id,\n      createdAt: data.generations_by_pk.createdAt\n    });\n  }\n}\n\nreturn [{\n  json: {\n    urls: urlArray\n  }\n}];\n\n\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3140,
+        -1500
+      ],
+      "id": "0371e258-a81f-4ece-9851-da52067e42c3",
+      "name": " Format Motion Video URLs"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.creatomate.com/v1/renders",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer 251d2e9644b344d0864b22ea80f67126e6947fdc3ac5cac4ac2435520717dfe51addf178ce3e4a2cc39d6ab1a843c6c0"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"template_id\": \"909e08b2-9c90-48d4-a2b9-c34e2d57f3b5\",\n  \"modifications\": {\n    \"Video-1.source\": \"{{ $(' Format Motion Video URLs').first().json.urls[0].motionMP4URL }}\",\n    \"Video-2.source\": \"{{ $(' Format Motion Video URLs').first().json.urls[1].motionMP4URL }}\",\n    \"Video-3.source\": \"{{ $(' Format Motion Video URLs').first().json.urls[2].motionMP4URL }}\",\n    \"Video-4.source\": \"{{ $(' Format Motion Video URLs').first().json.urls[3].motionMP4URL }}\",\n    \"Audio-Track.source\": \"{{ $('Upload: Save Audio to Google Drive').first().json.webContentLink }}\",\n    \"Text-1.text\": \"{{ $(' Form: User Submission').first().json['animal 1'] }}\",\n    \"Text-2.text\": \"{{ $(' Form: User Submission').first().json['animal 2'] }}\",\n    \"Text-3.text\": \"{{ $(' Form: User Submission').first().json['animal 3'] }}\",\n    \"Text-4.text\": \"{{ $(' Form: User Submission').first().json['animal 4'] }}\"\n  }\n}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3360,
+        -1500
+      ],
+      "id": "8f922138-88b5-457b-b36e-4201e1ef8542",
+      "name": "Creatomate: Combine Videos & Audio"
+    },
+    {
+      "parameters": {
+        "amount": 30
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        3580,
+        -1500
+      ],
+      "id": "52f18522-a753-4bd5-a8f5-8c8820949641",
+      "name": "Wait: Creatomate Rendering",
+      "webhookId": "a8a2338c-7e1e-4815-8776-a3ed61efe407"
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.url }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3800,
+        -1500
+      ],
+      "id": "b5d078c8-8d56-42e0-8025-84932c910e26",
+      "name": "Download: Final MP4 from Creatomate"
+    },
+    {
+      "parameters": {
+        "name": "={{ $(' Form: User Submission').first().json.Title }}.mp4",
+        "driveId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "My Drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "1YikkHYBgmrUSj20iftwEBeVixhFLGCTL",
+          "mode": "list",
+          "cachedResultName": "AI generated Videos",
+          "cachedResultUrl": "https://drive.google.com/drive/folders/1YikkHYBgmrUSj20iftwEBeVixhFLGCTL"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        4020,
+        -1500
+      ],
+      "id": "4df566da-844f-4d00-a39c-4bde0590e31a",
+      "name": "Upload: Save Final Video to Drive",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "B0Hulh0j065xznhI",
+          "name": "nnekajennifer"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1vq-YMYKQ3H2G2VOJQuOdM4bG8TIJPI4DuVCqfp0EioI",
+          "mode": "list",
+          "cachedResultName": "AI generated videos",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1vq-YMYKQ3H2G2VOJQuOdM4bG8TIJPI4DuVCqfp0EioI/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1vq-YMYKQ3H2G2VOJQuOdM4bG8TIJPI4DuVCqfp0EioI/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Title": "={{ $(' Form: User Submission').first().json.Title }}",
+            "Generated videos": "={{ $('Upload: Save Final Video to Drive').first().json.webViewLink }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Title",
+              "displayName": "Title",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Generated videos",
+              "displayName": "Generated videos",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        4240,
+        -1500
+      ],
+      "id": "4ee1d027-0010-42fe-ae43-be41e6bbee58",
+      "name": "Log: Add Video Title & Link to Sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "GaJqJHuS5mQxap7q",
+          "name": "Google Sheets account"
+        }
+      }
+    }
+  ],
+  "pinData": {
+    " Form: User Submission": [
+      {
+        "json": {
+          "Title": "Mythborn March: Nation to Legend Series",
+          "animal 1": "Japan",
+          "animal 2": "Nigeria",
+          "animal 3": "Russia",
+          "animal 4": "Egypt",
+          "submittedAt": "2025-06-24T23:15:19.040+10:00",
+          "formMode": "test"
+        }
+      }
+    ]
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 0,
+  "updatedAt": "2025-06-24T20:28:47.000Z",
+  "versionId": "0769489a-90f2-4d05-806d-9766a4c99d85"
+}
