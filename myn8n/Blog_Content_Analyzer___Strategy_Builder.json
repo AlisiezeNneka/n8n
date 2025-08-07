@@ -1,0 +1,1947 @@
+{
+  "name": "Blog Content Analyzer & Strategy Builder",
+  "nodes": [
+    {
+      "parameters": {
+        "formTitle": "blog content strategy",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Client URL",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Client Blog URL",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Ideal Customer Description",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Your Email",
+              "requiredField": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.2,
+      "position": [
+        -240,
+        -1820
+      ],
+      "id": "55605337-e119-4480-b5d4-c3eeb326549f",
+      "name": "On form submission",
+      "webhookId": "75c29ccf-8a5d-4d8c-95ca-74a838257011"
+    },
+    {
+      "parameters": {
+        "amount": 60
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        2400,
+        -1820
+      ],
+      "id": "b1ad227e-737b-49bd-ab42-7e2a7781eac8",
+      "name": "Wait",
+      "webhookId": "250a791a-fe17-4709-b215-be613be7a165"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-2.0-flash-001",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        5128,
+        -1600
+      ],
+      "id": "134a4912-7e3e-4050-b372-e88084f0196e",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "EDJr9RDlJcoxIm7G",
+          "name": "Google Gemini(PaLM) API - Stryde Account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-2.0-flash-001",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        6640,
+        -1460
+      ],
+      "id": "bd7ec641-0d95-4278-9ec6-aaf13bfdcd78",
+      "name": "Google Gemini Chat Model1",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "EDJr9RDlJcoxIm7G",
+          "name": "Google Gemini(PaLM) API - Stryde Account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.firecrawl.dev/v1/crawl",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"url\": \"{{ $('On form submission').first().json['Client Blog URL'] }}\",\n  \"limit\": 50,\n  \"allowSubdomains\": true,\n  \"scrapeOptions\": {\n    \"formats\": [\n      \"markdown\", \"html\"\n    ]\n  }\n}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2180,
+        -1820
+      ],
+      "id": "cb699b7a-4467-4f5f-b013-bbf081082e0f",
+      "name": "Firecrawl: Start Blog Crawl",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "AXkrl87jajAotejo",
+          "name": "Firecrawl"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "={{ $('Firecrawl: Start Blog Crawl').first().json.url }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2620,
+        -1820
+      ],
+      "id": "3d5b6d64-2f69-44ef-9d40-0a0eeaa3c1c1",
+      "name": "Firecrawl: Check Crawl Status",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "AXkrl87jajAotejo",
+          "name": "Firecrawl"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "urls",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        3060,
+        -1820
+      ],
+      "id": "3e28131e-0cb1-4d64-bb4c-a6060886541b",
+      "name": "Split Crawled Pages"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "17df89fa-0e63-4587-95c1-687565a5d3a5",
+              "name": "metadata.url",
+              "value": "={{ $json.urls }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        3280,
+        -1820
+      ],
+      "id": "61423798-4ced-48b1-a62d-e68d2f2fab54",
+      "name": "Prepare URL for Extraction"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        3720,
+        -1820
+      ],
+      "id": "4e79dd86-db3f-4d2c-b9c2-53c51c0edf84",
+      "name": "Loop Through Pages"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.firecrawl.dev/v1/extract",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"urls\": [\n    \"{{ $json.metadata.url }}\"\n  ],\n  \"prompt\": \"Extract the main blog post title exactly as shown on the page ( NOT THE TITLE TAG). Also, calculate the total word count of the full blog post content visible to readers, excluding menus, ads, and unrelated sections.\",\n  \"schema\": {\n    \"type\": \"object\",\n    \"properties\": {\n      \"title\": {\n        \"type\": \"string\",\n        \"description\": \"The visible blog post title on the page\"\n      },\n      \"wordCount\": {\n        \"type\": \"integer\",\n        \"description\": \"The total number of words in the blog content\"\n      }\n    },\n    \"required\": [\"title\", \"wordCount\"]\n  }\n}\n\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3940,
+        -1820
+      ],
+      "id": "4014b83e-b69b-4b1d-9fc5-9e485d7ed41c",
+      "name": "Extract Blog Title & Word Count",
+      "retryOnFail": true,
+      "waitBetweenTries": 5000,
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "AXkrl87jajAotejo",
+          "name": "Firecrawl"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "=https://api.firecrawl.dev/v1/extract/{{ $json.id }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        4380,
+        -1820
+      ],
+      "id": "9a6f10a1-4331-4531-bf5b-ca959fe77743",
+      "name": "Check Extraction Status",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "AXkrl87jajAotejo",
+          "name": "Firecrawl"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "amount": 60
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        4160,
+        -1820
+      ],
+      "id": "bd3b21de-11f3-4e4b-8e32-43001ed1cc0c",
+      "name": "Pause Before Extract Status Check",
+      "webhookId": "5d0af35e-fd22-4edc-b8a6-468222462dab"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "485ecef8-b5a5-4d0c-89ea-14d4933330f3",
+              "name": "data.title",
+              "value": "={{ $json.data.title }}",
+              "type": "string"
+            },
+            {
+              "id": "9ef10793-65dd-402e-ad66-1ec18fa4e8f6",
+              "name": "data.wordCount",
+              "value": "={{ $json.data.wordCount }}",
+              "type": "number"
+            },
+            {
+              "id": "8dcd2d92-d1f2-48c4-8b1e-485851d534b6",
+              "name": "metadata.url",
+              "value": "={{ $('Loop Through Pages').first().json.metadata.url }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        4600,
+        -1820
+      ],
+      "id": "cd8563fa-ca93-4f9b-b87f-5256c4403c65",
+      "name": "Clean Extracted Data"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Here is the blog post:{{ $json.data.markdown }}",
+        "messages": {
+          "messageValues": [
+            {
+              "message": "You will receive  a blog post. Please read the content and write a clear, one-paragraph summary that captures the main point, tone, and takeaway of the post. Keep the summary concise, easy to understand, and suitable for readers who want a quick overview. Return only the summary. Do not include any extra text, headings, or explanations."
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.7,
+      "position": [
+        5040,
+        -1820
+      ],
+      "id": "bec14d3d-d5ca-4e58-acfc-bc012dbb3440",
+      "name": "Summarize Blog Content"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "fd83b2cf-7950-4b7c-8117-e0612650d9f5",
+              "name": "url",
+              "value": "={{ $('Clean Extracted Data').first().json.metadata.url }}",
+              "type": "string"
+            },
+            {
+              "id": "116c87ca-c6c8-4bbf-9d86-0a14394e1a3b",
+              "name": "title",
+              "value": "={{ $('Clean Extracted Data').first().json.data.title }}",
+              "type": "string"
+            },
+            {
+              "id": "029645ac-11c5-4a43-a280-1f3bc0c06d0f",
+              "name": "word_count",
+              "value": "={{ $('Clean Extracted Data').first().json.data.wordCount }}",
+              "type": "string"
+            },
+            {
+              "id": "0500da7b-3b0b-4672-b1f4-b78d50edfe37",
+              "name": "Summary",
+              "value": "={{ $('Summarize Blog Content').first().json.text }}",
+              "type": "string"
+            },
+            {
+              "id": "f3f678c5-761c-415d-a369-0aed7696388b",
+              "name": "# of Ranking Keywords",
+              "value": "={{ $('SEMrush: Keywords for Blog URL').first().json.data.split('\\n')[1].split(';')[0] }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        5636,
+        -1820
+      ],
+      "id": "5eb7c03f-f4a8-493e-8b03-bcd72d22fc90",
+      "name": "Prepare Final Output"
+    },
+    {
+      "parameters": {
+        "jsCode": "const data = $input.item.json; // your big item with many fields\n\nconst output = [];\n\nfor (const key in data) {\n  if (data.hasOwnProperty(key)) {\n    // Each output item has Field in column A and Value in column B\n    output.push({ json: { Field: key, Value: data[key] } });\n  }\n}\n\nreturn output;\n\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        5856,
+        -1820
+      ],
+      "id": "518cf653-1cb2-4df8-82cf-3f59fad845d7",
+      "name": "Format Output as Field-Value Pairs"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "={{ $('Google Sheets').first().json.spreadsheetId }}",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "={{ $('Google Sheets').item.json.sheets[0].properties.sheetId }}",
+          "mode": "id"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Header 1",
+              "displayName": "Header 1",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Header 2",
+              "displayName": "Header 2",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        6516,
+        -1820
+      ],
+      "id": "9132a282-ced3-46ed-8a0f-7d86b441db12",
+      "name": "Save Blog Audit to Google Sheets",
+      "retryOnFail": true,
+      "waitBetweenTries": 5000,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "fL6ps6Eb5Y1M37Ru",
+          "name": "Google Sheets account 4"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Here is the URL:{{ $('Prepare Final Output').first().json.url }}\n\nideal customer:{{ $('On form submission').first().json[\"Ideal Customer Description\"] }}\n\ncurrent blog post URLs:{{ JSON.stringify($('Code').first().json.urls) }}\n",
+        "hasOutputParser": true,
+        "messages": {
+          "messageValues": [
+            {
+              "message": "I need to build a content marketing/blog strategy for [insert URL]. Their ideal customer is [insert ideal customer]. \n\nCan you help me map the buyer journey for this customer and then help build a strategy to produce blog content to help educate and nurture them to purchase? The content should be focused on high and mid-funnel topics. \n\nHere is a list of all of their current blog post URLs and post summaries so we don’t duplicate any of their past efforts.\n\nBased on what you know about the client, their ideal customer, their product categories, and current blog content, please provide 50 new blog post ideas that will allow our team to create and optimize content that will rank well in Google and in the different LLMs like ChatGPT.\n\n\nPlease output your response in the following JSON format:\n\n{\n  \"buyerJourneyMap\": [\n    {\n      \"stage\": \"Awareness\",\n      \"customerGoals\": \"string\",\n      \"painPoints\": \"string\",\n      \"contentStrategy\": \"string\"\n    },\n    {\n      \"stage\": \"Consideration\",\n      \"customerGoals\": \"string\",\n      \"painPoints\": \"string\",\n      \"contentStrategy\": \"string\"\n    },\n    {\n      \"stage\": \"Decision\",\n      \"customerGoals\": \"string\",\n      \"painPoints\": \"string\",\n      \"contentStrategy\": \"string\"\n    }\n  ],\n  \"blogPostIdeas\": {\n    \"highFunnelTopics\": [\n      \"string\",\n      \"string\",\n      \"... up to 50 total ideas ...\"\n    ],\n    \"midFunnelTopics\": [\n      \"string\",\n      \"string\",\n      \"...\"\n    ]\n  }\n}\nPlease keep the JSON structure Consistent"
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.7,
+      "position": [
+        6736,
+        -1820
+      ],
+      "id": "db973130-57ba-4d61-a629-ee2255b9d913",
+      "name": "Gemini: Generate Strategy",
+      "executeOnce": true,
+      "retryOnFail": true,
+      "waitBetweenTries": 5000
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "={{ $('Google Sheets').first().json.spreadsheetId }}",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "={{ $('Google Sheets').first().json.sheets[2].properties.sheetId }}",
+          "mode": "id"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "ClientURL",
+              "displayName": "ClientURL",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Section",
+              "displayName": "Section",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Stage / Topic",
+              "displayName": "Stage / Topic",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Customer Goals / Blog Post Idea",
+              "displayName": "Customer Goals / Blog Post Idea",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Pain Points / Content Strategy",
+              "displayName": "Pain Points / Content Strategy",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        7992,
+        -1820
+      ],
+      "id": "40233dff-beca-46a8-b4a6-09980d4138db",
+      "name": "Save Strategy to Google Sheets",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "fL6ps6Eb5Y1M37Ru",
+          "name": "Google Sheets account 4"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n  \"buyerJourneyMap\": [\n    {\n      \"stage\": \"Awareness\",\n      \"customerGoals\": \"string\",\n      \"painPoints\": \"string\",\n      \"contentStrategy\": \"string\"\n    },\n    {\n      \"stage\": \"Consideration\",\n      \"customerGoals\": \"string\",\n      \"painPoints\": \"string\",\n      \"contentStrategy\": \"string\"\n    },\n    {\n      \"stage\": \"Decision\",\n      \"customerGoals\": \"string\",\n      \"painPoints\": \"string\",\n      \"contentStrategy\": \"string\"\n    }\n  ],\n  \"blogPostIdeas\": {\n    \"highFunnelTopics\": [\n      \"string\",\n      \"string\",\n      \"... up to 50 total ideas ...\"\n    ],\n    \"midFunnelTopics\": [\n      \"string\",\n      \"string\",\n      \"...\"\n    ]\n  }\n}\n"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.2,
+      "position": [
+        6980,
+        -1500
+      ],
+      "id": "ac1a3c69-aea0-42a2-8e3c-f51dc07f7dd9",
+      "name": "Parse Gemini Output"
+    },
+    {
+      "parameters": {
+        "url": "=https://serpapi.com/search.json?engine=google&hl=en&gl=us&q={{ $('Prepare Final Output').first().json.title }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpQueryAuth",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        8212,
+        -1820
+      ],
+      "id": "63095279-29c5-49c9-a8a4-ea4c59728f93",
+      "name": "SERP API: Search Blog Title",
+      "executeOnce": true,
+      "credentials": {
+        "httpQueryAuth": {
+          "id": "ocLWtpWebApHyaMu",
+          "name": "serapi"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "return items.map(item => {\n  const data = item.json;\n  const aiOverview = data.ai_overview ? \"Yes\" : \"No\";\n  const paa = data.related_questions && data.related_questions.length > 0 ? \"Yes\" : \"No\";\n  const reddit = (\n    (data.discussions_and_forums && data.discussions_and_forums.some(el => el.source === \"Reddit\")) ||\n    (data.organic_results && data.organic_results.some(el => el.link && el.link.includes(\"reddit.com\")))\n  ) ? \"Yes\" : \"No\";\n  \n  // Fixed video detection - check both video_results and inline_videos\n  const video = (\n    (data.video_results && data.video_results.length > 0) ||\n    (data.inline_videos && data.inline_videos.length > 0)\n  ) ? \"Yes\" : \"No\";\n  \n  return {\n    json: {\n      title: data.search_parameters?.q || \"\",\n      ai_overview: aiOverview,\n      people_also_ask: paa,\n      reddit_result: reddit,\n      video_result: video\n    }\n  };\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        8432,
+        -1820
+      ],
+      "id": "81b33c71-2f38-4a9a-aa15-6d3da76bd645",
+      "name": "Check SERP Features"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "cae63be6-59bb-4852-8cba-318ba7ba69b3",
+              "name": "Top Ranking Post # of Keywords",
+              "value": "={{ $json.data.split('\\n')[1].split(';')[0] }}",
+              "type": "string"
+            },
+            {
+              "id": "a74c1af7-2238-4b8b-aca9-01a55033fe0a",
+              "name": "Blog Post Title",
+              "value": "={{ $('SERP API: Search Blog Title').first().json.organic_results[0].title }}",
+              "type": "string"
+            },
+            {
+              "id": "b08bee3e-1980-4dea-8d36-cf65b9d61820",
+              "name": "AI Overview",
+              "value": "={{ $('Check SERP Features').item.json.ai_overview }}",
+              "type": "string"
+            },
+            {
+              "id": "e1cda100-3f5a-4d8d-aa67-c4e1eff5bf60",
+              "name": "PAA",
+              "value": "={{ $('Check SERP Features').item.json.people_also_ask }}",
+              "type": "string"
+            },
+            {
+              "id": "13f1100b-4246-40a8-924d-791e6260a0ab",
+              "name": "Reddit",
+              "value": "={{ $('Check SERP Features').item.json.reddit_result }}",
+              "type": "string"
+            },
+            {
+              "id": "c6c525cb-4385-4551-bab3-b0b98c428bb8",
+              "name": "Videos",
+              "value": "={{ $('Check SERP Features').item.json.video_result }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        8872,
+        -1820
+      ],
+      "id": "5177c681-ed42-4bb1-8a6f-b7db2f9635c9",
+      "name": "Prepare SERP Data Output"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "={{ $('Google Sheets').first().json.spreadsheetId }}",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "={{ $('Google Sheets').first().json.sheets[1].properties.title }}",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Blog Post Title",
+              "displayName": "Blog Post Title",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": " Top Ranking Post # of Keywords",
+              "displayName": " Top Ranking Post # of Keywords",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": " AI Overview",
+              "displayName": " AI Overview",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": " PAA",
+              "displayName": " PAA",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": " Reddit",
+              "displayName": " Reddit",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": " Videos",
+              "displayName": " Videos",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Top Ranking Post # of Keywords",
+              "displayName": "Top Ranking Post # of Keywords",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "AI Overview",
+              "displayName": "AI Overview",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "PAA",
+              "displayName": "PAA",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Reddit",
+              "displayName": "Reddit",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Videos",
+              "displayName": "Videos",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        9312,
+        -1820
+      ],
+      "id": "0e2f295f-a2f8-43b7-a548-dd20621620aa",
+      "name": "Save SERP Data to Google Sheets",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "fL6ps6Eb5Y1M37Ru",
+          "name": "Google Sheets account 4"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "move",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $('Google Sheets').first().json.spreadsheetId }}",
+          "mode": "id"
+        },
+        "driveId": {
+          "__rl": true,
+          "value": "My Drive",
+          "mode": "list",
+          "cachedResultName": "My Drive",
+          "cachedResultUrl": "https://drive.google.com/drive/my-drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "1ZmSsQokMG0_MGfiBCtffSjvxGujdClGb",
+          "mode": "id"
+        }
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        9532,
+        -1695
+      ],
+      "id": "01431c80-8d04-4d77-a381-d92aeff5029a",
+      "name": "Google Drive",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "ReRgbm9kzC07s2Sv",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.semrush.com/?type=url_rank&key=205ec14f751a722537406cfc3717948b&export_columns=Or,Ot,Oc,Ad,At,Ac&url={{ $('Clean Extracted Data').first().json.metadata.url }}&database=us",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {}
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        5416,
+        -1820
+      ],
+      "id": "5f083b04-9b97-4879-affb-9f509d60490d",
+      "name": "SEMrush: Keywords for Blog URL",
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.semrush.com/?type=url_rank&key=205ec14f751a722537406cfc3717948b&export_columns=Or,Ot,Oc,Ad,At,Ac&url={{ $('SERP API: Search Blog Title').first().json.organic_results[0].link }}&database=us",
+        "options": {
+          "redirect": {
+            "redirect": {
+              "followRedirects": false
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        8652,
+        -1820
+      ],
+      "id": "134174db-c1f6-4670-beb0-f9a35f5da6a1",
+      "name": "Semrush: Keywords for Ranking Post"
+    },
+    {
+      "parameters": {
+        "jsCode": "function extractUrls(obj, urls = []) {\n  if (typeof obj === 'object' && obj !== null) {\n    for (const key in obj) {\n      if (key === 'url' && typeof obj[key] === 'string') {\n        urls.push(obj[key]);\n      } else {\n        extractUrls(obj[key], urls);\n      }\n    }\n  }\n  return urls;\n}\n\nlet allUrls = [];\n\nfor (const item of items) {\n  allUrls = extractUrls(item.json, allUrls);\n}\n\n// Skip the first URL\nallUrls = allUrls.slice(1);\n\nconst filteredUrls = allUrls.filter(url => {\n  if (url.endsWith('.pdf')) return false;\n  if (url === 'https://therivatzion.com/' || url === 'https://therivatzion.com') return false;\n\n  const blocklist = [\n    '/wp-content/',\n    '/custom-block/',\n    '/custom-site-header/',\n    '/product/',\n    '/room/',\n    '/shop/',\n    '/gallery/',\n    '/privacy-policy',\n    '/contact/',\n    '/about',\n    '/author/',\n    '/property-map',\n    '/guest-policies',\n    '/sitemap',\n  ];\n\n  for (const pattern of blocklist) {\n    if (url.includes(pattern)) return false;\n  }\n\n  // Must be deep enough to look like a post\n  const urlPath = url.replace('https://therivatzion.com', '');\n  const segments = urlPath.split('/').filter(seg => seg.length > 0);\n\n  return segments.length >= 2;\n});\n\n// Return as one item, aggregated\nreturn [\n  {\n    json: {\n      urls: filteredUrls\n    }\n  }\n];\n\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2840,
+        -1820
+      ],
+      "id": "27e7a8f4-b6f9-407f-b49a-5cbe18e1762b",
+      "name": "Code"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "2fc9fc89-5ef7-4ed6-a594-0ed82e5ddc6a",
+              "name": "output.buyerJourneyMap",
+              "value": "={{ $json.output.buyerJourneyMap }}",
+              "type": "array"
+            },
+            {
+              "id": "d15d0622-ac89-4ecc-99da-95a4e131d60e",
+              "name": "output.blogPostIdeas",
+              "value": "={{ $json.output.blogPostIdeas }}",
+              "type": "object"
+            },
+            {
+              "id": "f692ef1a-772e-4565-b01f-cbee2755296c",
+              "name": "output.blogPostIdeas.midFunnelTopics",
+              "value": "={{ $json.output.blogPostIdeas.midFunnelTopics }}",
+              "type": "array"
+            },
+            {
+              "id": "efe74d01-d09c-43ec-a59b-27cd5d881bba",
+              "name": "ClientURL",
+              "value": "={{ $('Clean Extracted Data').first().json.metadata.url }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        7112,
+        -1820
+      ],
+      "id": "458c3c5b-6b93-4a8d-9d95-4d0bc985ec1e",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "jsCode": "const data = $json.output;\nconst clientURL = $json.ClientURL;\n\nconst output = [];\n\n// Buyer Journey Map rows - each as a separate row\ndata.buyerJourneyMap.forEach(stage => {\n  output.push({\n    json: {\n      \"Client URL\": clientURL,\n      Section: \"Buyer Journey Map\",\n      \"Stage / Topic\": stage.stage,\n      \"Customer Goals / Blog Post Idea\": stage.customerGoals,\n      \"Pain Points / Content Strategy\": stage.painPoints + \"\\n\" + stage.contentStrategy\n    }\n  });\n});\n\n// Aggregate High Funnel blog ideas into one comma-separated string\nconst highFunnelBlock = data.blogPostIdeas.highFunnelTopics.join(', ');\n\noutput.push({\n  json: {\n    \"Client URL\": clientURL,\n    Section: \"Blog Post Ideas\",\n    \"Stage / Topic\": \"High Funnel Topics\",\n    \"Customer Goals / Blog Post Idea\": highFunnelBlock,\n    \"Pain Points / Content Strategy\": \"\"\n  }\n});\n\n// Aggregate Mid Funnel blog ideas into one comma-separated string\nconst midFunnelBlock = data.blogPostIdeas.midFunnelTopics.join(', ');\n\noutput.push({\n  json: {\n    \"Client URL\": clientURL,\n    Section: \"Blog Post Ideas\",\n    \"Stage / Topic\": \"Mid Funnel Topics\",\n    \"Customer Goals / Blog Post Idea\": midFunnelBlock,\n    \"Pain Points / Content Strategy\": \"\"\n  }\n});\n\nreturn output;\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        7332,
+        -1820
+      ],
+      "id": "db12ba63-8754-4f16-837c-c9d5c03c738a",
+      "name": "Format Output Field"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('On form submission').first().json['Your Email'] }}",
+        "subject": "Content Strategy Workflow Completed Successfully",
+        "message": "=<p>\n  The content strategy generation workflow has finished running. All data has been processed and the results have been uploaded to the designated Google Sheet. \n  Please review the updated spreadsheet \n  <a href=\"{{ $('Google Sheets').first().json.spreadsheetUrl }}\" target=\"_blank\">\n    here\n  </a> \n  for the latest buyer journey map and blog post ideas.\n</p>\n",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        3940,
+        -2020
+      ],
+      "id": "672ce63d-f3f2-4806-8150-b03bd74bfcbe",
+      "name": "Gmail",
+      "webhookId": "f7d57a36-a720-4a41-872c-2b42aab5e83b",
+      "executeOnce": true,
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "w9BcyMuS4x5Lccdg",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.firecrawl.dev/v1/scrape",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"url\": \"{{ $json.metadata.url }}\",\n  \"formats\": [\n    \"markdown\",\n    \"html\"\n  ]\n} ",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        4820,
+        -1820
+      ],
+      "id": "1829a010-a4d2-4973-b98d-da9e700945b1",
+      "name": "Check Extraction Status1",
+      "retryOnFail": true,
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "AXkrl87jajAotejo",
+          "name": "Firecrawl"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "amount": 30
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        6296,
+        -1820
+      ],
+      "id": "407c35d5-d4e1-4a1b-a46d-6a7ca278f218",
+      "name": "Wait1",
+      "webhookId": "9fda8fa2-f572-476f-95be-581c6506d3e8"
+    },
+    {
+      "parameters": {
+        "resource": "spreadsheet",
+        "title": "={{ $json[\"Client URL\"].trim().split(/›|>|»/)[0].trim().split(\".\")[0] }}",
+        "sheetsUi": {
+          "sheetValues": [
+            {
+              "title": "Blog content audit"
+            },
+            {
+              "title": "Blog Topics"
+            },
+            {
+              "title": "Blog strategy"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        -20,
+        -1820
+      ],
+      "id": "fdcfb263-e9ce-4068-b009-4b409f978a49",
+      "name": "Google Sheets",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "fL6ps6Eb5Y1M37Ru",
+          "name": "Google Sheets account 4"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "PUT",
+        "url": "=https://sheets.googleapis.com/v4/spreadsheets/{{ $('Google Sheets').first().json.spreadsheetId }}/values/{{ $('Google Sheets').first().json.sheets[0].properties.title }}!A:Z",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "valueInputOption",
+              "value": "RAW"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "range",
+              "value": "={{ $('Google Sheets').first().json.sheets[0].properties.title }}!A:Z"
+            },
+            {
+              "name": "values",
+              "value": "={{ $json.data }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "123fe3bd-c73c-4bfe-b0ef-c05999800566",
+      "name": "Update Google Sheet",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        640,
+        -1820
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "fL6ps6Eb5Y1M37Ru",
+          "name": "Google Sheets account 4"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "rows",
+              "value": "Header 1,Header 2"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "93b32280-71a9-4758-a03f-d0f38b406e6e",
+      "name": "Define headers",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [
+        200,
+        -1820
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "return [\n  {\n    json: {\n      data: [ $json.rows.split(',') ]\n    }\n  }\n];\n\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        420,
+        -1820
+      ],
+      "id": "b092af9c-1556-418b-9ac8-bb4503fab575",
+      "name": "Code1"
+    },
+    {
+      "parameters": {
+        "method": "PUT",
+        "url": "=https://sheets.googleapis.com/v4/spreadsheets/{{ $('Google Sheets').first().json.spreadsheetId }}/values/{{ $('Google Sheets').first().json.sheets[1].properties.title }}!A:Z",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "valueInputOption",
+              "value": "RAW"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "range",
+              "value": "={{ $('Google Sheets').first().json.sheets[1].properties.title }}!A:Z"
+            },
+            {
+              "name": "values",
+              "value": "={{ $json.data }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "af489f98-41f5-4afc-beac-06ebbe5ee92d",
+      "name": "Update Google Sheet1",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        1300,
+        -1820
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "fL6ps6Eb5Y1M37Ru",
+          "name": "Google Sheets account 4"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "rows",
+              "value": "Blog Post Title,Top Ranking Post # of Keywords,AI Overview,PAA,Reddit,Videos"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "0548d2a6-9f48-4e62-8bbf-4ff263f478ea",
+      "name": "Define headers1",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [
+        860,
+        -1820
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "return [\n  {\n    json: {\n      data: [ $json.rows.split(',') ]\n    }\n  }\n];\n\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1080,
+        -1820
+      ],
+      "id": "8ff293ba-ad00-4453-8a05-1e21f4fd02c8",
+      "name": "Code2"
+    },
+    {
+      "parameters": {
+        "method": "PUT",
+        "url": "=https://sheets.googleapis.com/v4/spreadsheets/{{ $('Google Sheets').first().json.spreadsheetId }}/values/{{ $('Google Sheets').first().json.sheets[2].properties.title }}!A:Z",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "valueInputOption",
+              "value": "RAW"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "range",
+              "value": "={{ $('Google Sheets').first().json.sheets[2].properties.title }}!A:Z"
+            },
+            {
+              "name": "values",
+              "value": "={{ $json.data }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "55be252b-2eb9-458b-9ae6-d91451604e0a",
+      "name": "Update Google Sheet2",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        1960,
+        -1820
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "fL6ps6Eb5Y1M37Ru",
+          "name": "Google Sheets account 4"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "rows",
+              "value": "ClientURL,Section,Stage / Topic,Customer Goals / Blog Post Idea,Pain Points / Content Strategy"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "391b9d78-b8af-4c86-a6c5-6683132c4a26",
+      "name": "Define headers2",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [
+        1520,
+        -1820
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "return [\n  {\n    json: {\n      data: [ $json.rows.split(',') ]\n    }\n  }\n];\n\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1740,
+        -1820
+      ],
+      "id": "9eb1811b-1541-4e4d-8ee2-91d8025fda33",
+      "name": "Code3"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "6fc2da58-2ba0-4786-95fe-e84511ef6f80",
+              "name": "Header 1",
+              "value": "={{ $json.Field }}",
+              "type": "string"
+            },
+            {
+              "id": "fe2d7e05-f38e-4eba-983d-f847a636e23b",
+              "name": "Header 2",
+              "value": "={{ $json.Value }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        6076,
+        -1820
+      ],
+      "id": "4698b9e2-a1da-4e72-a65d-11699f3d3330",
+      "name": "Edit Fields1"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "aeed6558-2213-4c3e-af09-5e19298d57db",
+              "name": "ClientURL",
+              "value": "={{ $json['Client URL'] }}",
+              "type": "string"
+            },
+            {
+              "id": "a26801f4-073c-4f33-a85a-f8f902149368",
+              "name": "Section",
+              "value": "={{ $json.Section }}",
+              "type": "string"
+            },
+            {
+              "id": "6fb36bbe-ff1b-4fe6-9bc0-2adbecf78b33",
+              "name": "Stage / Topic",
+              "value": "={{ $json['Stage / Topic'] }}",
+              "type": "string"
+            },
+            {
+              "id": "492e5e4c-0a9d-4dc6-bb8b-986e8987a3cd",
+              "name": "Customer Goals / Blog Post Idea",
+              "value": "={{ $json['Customer Goals / Blog Post Idea'] }}",
+              "type": "string"
+            },
+            {
+              "id": "161b9478-6193-4b0a-8e20-1eb18ed29f3d",
+              "name": "Pain Points / Content Strategy",
+              "value": "={{ $json['Pain Points / Content Strategy'] }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        7552,
+        -1820
+      ],
+      "id": "01ba8369-38c9-4d24-b3d4-fd2d9dc48143",
+      "name": "Edit Fields2"
+    },
+    {
+      "parameters": {
+        "amount": 30
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        7772,
+        -1820
+      ],
+      "id": "72bece84-d82d-4dab-967c-f76480798ce1",
+      "name": "Wait2",
+      "webhookId": "0e671f1e-1cc3-46d8-8085-e805241f386b"
+    },
+    {
+      "parameters": {
+        "amount": 30
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        9092,
+        -1820
+      ],
+      "id": "842340fe-6b56-47f0-8586-410530f15bec",
+      "name": "Wait3",
+      "webhookId": "ed7b6336-c623-44ab-a489-d97a9871fd40"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolSerpApi",
+      "typeVersion": 1,
+      "position": [
+        -240,
+        -1195
+      ],
+      "id": "e75c4ade-29c5-49d3-9852-b7098362f3b9",
+      "name": "SerpAPI",
+      "credentials": {
+        "serpApi": {
+          "id": "jWKxCeKBHnFJK4i3",
+          "name": "SerpAPI account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolSerpApi",
+      "typeVersion": 1,
+      "position": [
+        -240,
+        -1435
+      ],
+      "id": "f6fe9162-5b1b-4d30-8e9b-b90d5f723114",
+      "name": "SerpAPI1",
+      "credentials": {
+        "serpApi": {
+          "id": "jWKxCeKBHnFJK4i3",
+          "name": "SerpAPI account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "On form submission": {
+      "main": [
+        [
+          {
+            "node": "Google Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "Firecrawl: Check Crawl Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Summarize Blog Content",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Gemini: Generate Strategy",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Firecrawl: Start Blog Crawl": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Firecrawl: Check Crawl Status": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Crawled Pages": {
+      "main": [
+        [
+          {
+            "node": "Prepare URL for Extraction",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare URL for Extraction": {
+      "main": [
+        [
+          {
+            "node": "Loop Through Pages",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Through Pages": {
+      "main": [
+        [
+          {
+            "node": "Gmail",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Extract Blog Title & Word Count",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Blog Title & Word Count": {
+      "main": [
+        [
+          {
+            "node": "Pause Before Extract Status Check",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Extraction Status": {
+      "main": [
+        [
+          {
+            "node": "Clean Extracted Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pause Before Extract Status Check": {
+      "main": [
+        [
+          {
+            "node": "Check Extraction Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Clean Extracted Data": {
+      "main": [
+        [
+          {
+            "node": "Check Extraction Status1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Summarize Blog Content": {
+      "main": [
+        [
+          {
+            "node": "SEMrush: Keywords for Blog URL",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Final Output": {
+      "main": [
+        [
+          {
+            "node": "Format Output as Field-Value Pairs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Output as Field-Value Pairs": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save Blog Audit to Google Sheets": {
+      "main": [
+        [
+          {
+            "node": "Gemini: Generate Strategy",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gemini: Generate Strategy": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save Strategy to Google Sheets": {
+      "main": [
+        [
+          {
+            "node": "SERP API: Search Blog Title",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Gemini Output": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Gemini: Generate Strategy",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SERP API: Search Blog Title": {
+      "main": [
+        [
+          {
+            "node": "Check SERP Features",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check SERP Features": {
+      "main": [
+        [
+          {
+            "node": "Semrush: Keywords for Ranking Post",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare SERP Data Output": {
+      "main": [
+        [
+          {
+            "node": "Wait3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save SERP Data to Google Sheets": {
+      "main": [
+        [
+          {
+            "node": "Google Drive",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SEMrush: Keywords for Blog URL": {
+      "main": [
+        [
+          {
+            "node": "Prepare Final Output",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Semrush: Keywords for Ranking Post": {
+      "main": [
+        [
+          {
+            "node": "Prepare SERP Data Output",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "Split Crawled Pages",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Format Output Field",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Output Field": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Drive": {
+      "main": [
+        [
+          {
+            "node": "Loop Through Pages",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Extraction Status1": {
+      "main": [
+        [
+          {
+            "node": "Summarize Blog Content",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait1": {
+      "main": [
+        [
+          {
+            "node": "Save Blog Audit to Google Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Sheets": {
+      "main": [
+        [
+          {
+            "node": "Define headers",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Define headers": {
+      "main": [
+        [
+          {
+            "node": "Code1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code1": {
+      "main": [
+        [
+          {
+            "node": "Update Google Sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Define headers1": {
+      "main": [
+        [
+          {
+            "node": "Code2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code2": {
+      "main": [
+        [
+          {
+            "node": "Update Google Sheet1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Google Sheet": {
+      "main": [
+        [
+          {
+            "node": "Define headers1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Google Sheet1": {
+      "main": [
+        [
+          {
+            "node": "Define headers2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Define headers2": {
+      "main": [
+        [
+          {
+            "node": "Code3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code3": {
+      "main": [
+        [
+          {
+            "node": "Update Google Sheet2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Google Sheet2": {
+      "main": [
+        [
+          {
+            "node": "Firecrawl: Start Blog Crawl",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields1": {
+      "main": [
+        [
+          {
+            "node": "Wait1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields2": {
+      "main": [
+        [
+          {
+            "node": "Wait2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait2": {
+      "main": [
+        [
+          {
+            "node": "Save Strategy to Google Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait3": {
+      "main": [
+        [
+          {
+            "node": "Save SERP Data to Google Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "d335740c-f595-4f4e-bc9c-e5d9f10bfecb",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "f6c9eca423303bc1338431b2d767240311861a79c682ac7ab617cf9629046de0"
+  },
+  "id": "GBlF6ZLf94CYoIQu",
+  "tags": []
+}
