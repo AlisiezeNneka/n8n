@@ -1,0 +1,1007 @@
+{
+  "name": "Caption Automation",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {}
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -880,
+        440
+      ],
+      "id": "dc90cfa6-8684-4a34-ba6a-1e11e1dd723e",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "url": "https://rss.app/feeds/_CjTGNb2G0r7JA5nu.xml",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.1,
+      "position": [
+        -260,
+        280
+      ],
+      "id": "7fab9298-5019-41ae-baa3-0645db40eaac",
+      "name": "RSS Read"
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.link }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        500,
+        360
+      ],
+      "id": "0f3d0209-b7da-4060-8562-209e903ed084",
+      "name": "HTTP Request1",
+      "retryOnFail": false,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        240,
+        280
+      ],
+      "id": "a3cbb8d0-2c22-43fd-94d9-1b629d1749f8",
+      "name": "Loop Over Items1",
+      "alwaysOutputData": false
+    },
+    {
+      "parameters": {
+        "jsCode": "const raw = $json.data;\n\nconst cleaned = raw\n  .replace(/<style[\\s\\S]*?<\\/style>/gi, '')\n  .replace(/<script[\\s\\S]*?<\\/script>/gi, '')\n  .replace(/<!--[\\s\\S]*?-->/gi, '')\n  .replace(/<[^>]+>/g, '')\n  .replace(/&[#a-zA-Z0-9]+;/g, '')\n  .replace(/\\s+/g, ' ')\n  .trim();\n\nreturn [{ cleaned }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        740,
+        360
+      ],
+      "id": "04973c20-094e-489a-ac04-0d8853e3bf4a",
+      "name": "Code1",
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "3b06e459-bf86-49c2-9d90-03dc3eb4c6ec",
+              "name": "content",
+              "value": "={{ $('Code1').first().json.cleaned }}",
+              "type": "string"
+            },
+            {
+              "id": "a18bfc8b-2179-452c-bc80-739fe2e67dd8",
+              "name": "url",
+              "value": "={{ $('RSS Read').first().json.link }}",
+              "type": "string"
+            },
+            {
+              "id": "58b4c9f7-c8da-4e18-851b-7c8667caa2fc",
+              "name": "publishedDate",
+              "value": "={{ $('RSS Read').first().json.pubDate }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        560,
+        40
+      ],
+      "id": "00f0fc5e-3502-4bde-98fb-36f67b43e866",
+      "name": "Edit Fields2"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "GPT-4O-MINI"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=You are a content creator for Instagram, TikTok, and Facebook. Below is a list of AI-related article titles and summaries. Your task is to:\n\nOnly consider articles that were published on today\n\nReview the content and rate each article based on how well it aligns with any of the following target topics:\n\nAgentic AI systems, Retrieval-Augmented Generation (RAG), Multimodal AI (text-image-video-audio), AI assistants, copilots, and productivity agents, Self-hosted LLMs and open-source AI, Synthetic data and simulation, Foundation models beyond just text (vision, audio, etc.), Explainable AI (XAI), interpretability, and transparency tools, Responsible AI, bias mitigation, and governance, Federated learning and privacy-first AI, Self-supervised learning, Neuro-symbolic AI, RL in robotics and real-world control systems, AI chip design: GPUs, TPUs, edge AI, TinyML, MLOps, dev tools, and AI debugging, Cloud-native AI stacks and green compute, AI in healthcare, robotics, climate, education, smart cities, AI and law, misinformation, space, and ethics, Startups and infrastructure innovations in AI.\n\nPick the most relevant and engaging article out of those that match.\n\nNow, write a short script (under 60 seconds when read aloud) that explains this topic in a way that’s clear, engaging, and simple for a general audience. Start with a bold hook. Keep it focused — no fluff or technical jargon. End with a question or a short CTA to boost engagement.\n\nReturn only the final script. Do not include article titles, summaries, scores,Hashtags , emojis or explanations, please keep the script under 800 characters, please do not exceed\n\n\n\n",
+              "role": "system"
+            },
+            {
+              "content": "=currentDate:{{$today.format('yyyy-MM-dd') }}\n\npost:{{ \n  $json.data && \n  (\n    (Array.isArray($json.data) && $json.data.length > 0) ||\n    (typeof $json.data === \"object\" && Object.keys($json.data).length > 0) ||\n    (typeof $json.data !== \"object\" && String($json.data).trim() !== \"\")\n  ) \n  ? JSON.stringify($json.data) \n  : JSON.stringify($('Aggregate').item.json.content) \n}}\n"
+            }
+          ]
+        },
+        "jsonOutput": true,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        1940,
+        40
+      ],
+      "id": "374acafd-7452-4838-a90a-714cca879e65",
+      "name": "OpenAI1",
+      "credentials": {
+        "openAiApi": {
+          "id": "TgvP6xEbKcWZ2EQW",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        1280,
+        40
+      ],
+      "id": "54de8ae4-f231-4872-975c-f0df9e80907a",
+      "name": "Aggregate1"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "4f966e27-1af3-4608-a341-de8417d02375",
+              "name": "content",
+              "value": "={{ $json.content }}",
+              "type": "string"
+            },
+            {
+              "id": "9b9240f5-6547-4e9b-963c-29303323ec53",
+              "name": "url",
+              "value": "={{ $json.url }}",
+              "type": "string"
+            },
+            {
+              "id": "2dad7abc-c5ad-4824-be28-1b91f7bab177",
+              "name": "created_at",
+              "value": "={{ $('RSS Read').first().json.pubDate }}",
+              "type": "string"
+            },
+            {
+              "id": "f4864b31-e339-4e4e-8749-e4ed465bfddc",
+              "name": "title",
+              "value": "={{ $('RSS Read').first().json.title }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1060,
+        40
+      ],
+      "id": "ce086b30-f156-428e-a30c-b6a6af12cad7",
+      "name": "Edit Fields3"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "8b68a837-e527-47ab-91cd-e1dd103b81ca",
+              "leftValue": "={{ $json.content }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.2,
+      "position": [
+        800,
+        40
+      ],
+      "id": "44cb621c-cdbe-4ded-9063-0aaed7176a8b",
+      "name": "Filter"
+    },
+    {
+      "parameters": {
+        "jsCode": "const text =$input.first().json.message.content.script  || '';\n\nconst cleaned = text.replace(/(\\r\\n|\\n|\\r)/gm, ' ');\n\nreturn [\n  {\n    json: {\n      script: cleaned\n    }\n  }\n];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2360,
+        40
+      ],
+      "id": "e4daf8bd-d59b-4eac-b749-d022060856bd",
+      "name": "Code"
+    },
+    {
+      "parameters": {
+        "amount": 80
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        2780,
+        40
+      ],
+      "id": "d031ede6-d482-4ee0-823b-88e840a4652c",
+      "name": "Wait: For HeyGen to Process",
+      "webhookId": "f78db6d8-9a63-4961-8abb-ac44b4c230d1"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "ab430d75-e191-4639-a191-203f06a25b3c",
+              "leftValue": "={{ $json.state }}",
+              "rightValue": "COMPLETE",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        3240,
+        40
+      ],
+      "id": "8134f22d-384a-44e3-96e3-ee71591bd7cc",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "amount": 3,
+        "unit": "minutes"
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        3660,
+        220
+      ],
+      "id": "f27cb49f-e6bf-45c4-bcea-07e5c4d0b1f8",
+      "name": "Wait",
+      "webhookId": "416aa824-961a-4e96-a449-ca798dcdaaa9"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "WClobzDPvVUeNm8N",
+          "mode": "list",
+          "cachedResultName": "Heygen Automation"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        -620,
+        -420
+      ],
+      "id": "423d9d87-e9de-45a1-a71b-e0debff620dd",
+      "name": "Execute Workflow"
+    },
+    {
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -920,
+        60
+      ],
+      "id": "1edcf666-e047-42d6-9fb0-a3c8a140b787",
+      "name": "When Executed by Another Workflow"
+    },
+    {
+      "parameters": {
+        "operation": "create",
+        "base": {
+          "__rl": true,
+          "value": "appVyAu1sNdfYE6Xp",
+          "mode": "list",
+          "cachedResultName": "AI videos",
+          "cachedResultUrl": "https://airtable.com/appVyAu1sNdfYE6Xp"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblXzPNz2U1KRpAfS",
+          "mode": "list",
+          "cachedResultName": "Videos",
+          "cachedResultUrl": "https://airtable.com/appVyAu1sNdfYE6Xp/tblXzPNz2U1KRpAfS"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Video URL": "={{ $json.body.downloadUrl }}",
+            "Caption Video ID": "={{ $json.body.projectId }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Caption Video ID",
+              "displayName": "Caption Video ID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Video URL",
+              "displayName": "Video URL",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Approved?",
+              "displayName": "Approved?",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "Approved",
+                  "value": "Approved"
+                },
+                {
+                  "name": "Not Approved",
+                  "value": "Not Approved"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.1,
+      "position": [
+        -620,
+        1040
+      ],
+      "id": "8a489726-7058-4bef-b51d-d1ee00c15340",
+      "name": "Airtable",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "YqfNdo733G0t2mJK",
+          "name": "Brandon Airtable connection"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "path": "5aa2e179-8597-40bf-b4b4-a2e92bb63f83",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -880,
+        -420
+      ],
+      "id": "450f0e0d-2afc-4ef1-9d02-09a9ae2c7c88",
+      "name": "Webhook",
+      "webhookId": "5aa2e179-8597-40bf-b4b4-a2e92bb63f83"
+    },
+    {
+      "parameters": {
+        "content": "## Create Video Content\n",
+        "height": 820,
+        "width": 5040
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -1080,
+        -100
+      ],
+      "typeVersion": 1,
+      "id": "5539bb9d-ff99-41aa-906b-eb12db97d389",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "## Create a Retry\n",
+        "height": 260,
+        "width": 780,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -1020,
+        -480
+      ],
+      "typeVersion": 1,
+      "id": "4a618193-cf6b-47f2-9240-1f7b782109d9",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.captions.ai/api/creator/submit",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"script\": \"{{ $json.script }}\",\n  \"creatorName\": \"twin-3-Blessed\"\n}\n\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2580,
+        40
+      ],
+      "id": "e1413f65-91bd-4635-874a-fb3ba0ad3b04",
+      "name": "Captions: Generate Avatar Video",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "yDSlf2oVzmFFjowh",
+          "name": "Caption API Key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.captions.ai/api/creator/poll",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"operationId\": \"{{$('Captions: Generate Avatar Video').item.json.operationId}}\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3020,
+        40
+      ],
+      "id": "6b667c4f-2a5a-4169-9e93-3f7fd2ebd57c",
+      "name": "Caption: Check Video Status",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "yDSlf2oVzmFFjowh",
+          "name": "Caption API Key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.submagic.co/v1/projects",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n    \"title\": \"AI Avatar video {{$now.format('yyyy-MM-dd')}}\",\n    \"language\": \"en\",\n    \"videoUrl\": \"{{ $json.url }}\",\n    \"webhookUrl\": \"https://ownit.app.n8n.cloud/webhook-test/e364bc53-f9d7-42df-88d6-2e19f6ac0958\",\n    \"dictionary\": [\"Submagic\", \"AI-powered\", \"captions\"],\n    \"magicZooms\": true,\n    \"magicBrolls\": true,\n    \"magicBrollsPercentage\": 75\n  }",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3560,
+        0
+      ],
+      "id": "dfbea30e-f36e-4a51-a7f2-886e0d07a437",
+      "name": "HTTP Request",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "V2YHd9acJ8THJLTJ",
+          "name": "Sub magic"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "e364bc53-f9d7-42df-88d6-2e19f6ac0958",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -860,
+        1040
+      ],
+      "id": "04ff89ae-9f8e-449d-86bf-009958a83943",
+      "name": "Webhook1",
+      "webhookId": "e364bc53-f9d7-42df-88d6-2e19f6ac0958"
+    },
+    {
+      "parameters": {
+        "content": "Get Sub magic response",
+        "height": 240,
+        "width": 680
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -1000,
+        980
+      ],
+      "typeVersion": 1,
+      "id": "8887158f-19a9-4c33-a307-3bdbc863e04a",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "636ec309-f8ea-4832-a685-172b4b9402e0",
+              "leftValue": "={{ $json.link }}",
+              "rightValue": "www.reddit.com",
+              "operator": {
+                "type": "string",
+                "operation": "notContains"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -60,
+        280
+      ],
+      "id": "c1305e57-6332-4c25-91ee-09947d53d9b0",
+      "name": "If1"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "277d6aaf-bfd9-4193-ae32-b8b78ae6315a",
+              "name": "content",
+              "value": "={{ $json.content }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        260,
+        740
+      ],
+      "id": "a06448b9-29c8-41ad-9732-70dbb47ee585",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "destinationFieldName": "content",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        800,
+        720
+      ],
+      "id": "e1a34f00-4536-4ff3-9bb3-cf11183aadd7",
+      "name": "Aggregate"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "cfd50c2a-f846-4dd2-9c5a-34ec727b8a63",
+              "name": "content",
+              "value": "={{ $('Aggregate').item.json.content }}",
+              "type": "array"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1200,
+        500
+      ],
+      "id": "9ce7c44b-7425-4ea6-b487-14df73fa5870",
+      "name": "Edit Fields1"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "RSS Read",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request1": {
+      "main": [
+        [
+          {
+            "node": "Code1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items1": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields2",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "HTTP Request1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code1": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields2": {
+      "main": [
+        [
+          {
+            "node": "Filter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate1": {
+      "main": [
+        [
+          {
+            "node": "OpenAI1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields3": {
+      "main": [
+        [
+          {
+            "node": "Aggregate1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "RSS Read": {
+      "main": [
+        [
+          {
+            "node": "If1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI1": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "Captions: Generate Avatar Video",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait: For HeyGen to Process": {
+      "main": [
+        [
+          {
+            "node": "Caption: Check Video Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "Caption: Check Video Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute Workflow": {
+      "main": [
+        []
+      ]
+    },
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "RSS Read",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Execute Workflow",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Airtable": {
+      "main": [
+        []
+      ]
+    },
+    "Captions: Generate Avatar Video": {
+      "main": [
+        [
+          {
+            "node": "Wait: For HeyGen to Process",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Caption: Check Video Status": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        []
+      ]
+    },
+    "Webhook1": {
+      "main": [
+        [
+          {
+            "node": "Airtable",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If1": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Aggregate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields1": {
+      "main": [
+        [
+          {
+            "node": "OpenAI1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "8eae5de7-0dd8-4bc7-9010-e5baf4c478e4",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "166d4689c59911f643f13e9d0fbff9a4bbf61161b611b792db80178b1ac7a8c9"
+  },
+  "id": "WClobzDPvVUeNm8N",
+  "tags": []
+}
