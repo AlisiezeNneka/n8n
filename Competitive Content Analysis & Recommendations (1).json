@@ -1,0 +1,2267 @@
+{
+  "name": "Competitive Content Analysis & Recommendations",
+  "nodes": [
+    {
+      "parameters": {
+        "formTitle": "Request a Content Gap Analysis",
+        "formDescription": "Click the button below to initiate your content gap analysis.",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Client blog URL",
+              "placeholder": "https://therivatzion.com/our-blog",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Competitor blog URL's",
+              "fieldType": "textarea",
+              "placeholder": "=https://www.zionponderosa.com/blog\nhttps://www.zionponderosa.com/blog\nhttps://www.zionponderosa.com/blog",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Your Email (To Receive Notifications)",
+              "placeholder": "example@gmail.com"
+            }
+          ]
+        },
+        "options": {
+          "appendAttribution": false,
+          "buttonLabel": "Start Analysis",
+          "path": "content-gap-analysis",
+          "respondWithOptions": {
+            "values": {
+              "formSubmittedText": "Your content gap analysis report is on the way! You’ll receive it shortly."
+            }
+          },
+          "ignoreBots": true
+        }
+      },
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.2,
+      "position": [
+        112,
+        -240
+      ],
+      "id": "16ab248a-ed40-4d03-8688-27c84630b668",
+      "name": "On form submission",
+      "webhookId": "2910e8c3-cbf3-460e-959b-f4c479214727"
+    },
+    {
+      "parameters": {
+        "jsCode": "const result = [];\n\nitems.forEach(item => {\n  const clientUrl = item.json[\"Client blog URL\"];\n  const competitorUrls = item.json[\"Competitor blog URL\"];\n\n  // Add client URL if it's not empty\n  if (clientUrl && clientUrl.trim() !== '') {\n    result.push({ url: clientUrl.trim() });\n  }\n\n  // Handle competitor URLs\n  if (Array.isArray(competitorUrls)) {\n    competitorUrls.forEach(url => {\n      if (url && url.trim() !== '') {\n        result.push({ url: url.trim() });\n      }\n    });\n  } else if (typeof competitorUrls === 'string') {\n    // In case it's a newline-separated string\n    competitorUrls.split(/\\r?\\n/).forEach(url => {\n      if (url && url.trim() !== '') {\n        result.push({ url: url.trim() });\n      }\n    });\n  }\n});\n\nreturn result;\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        560,
+        -240
+      ],
+      "id": "20e9462d-0573-4aee-a08f-3773bd84ab29",
+      "name": "Combine URL's"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "20485a6d-6bf0-4824-998d-79f281645cfa",
+              "name": "Client blog URL",
+              "value": "={{ $json[\"Client blog URL\"] }}",
+              "type": "string"
+            },
+            {
+              "id": "e8217968-c315-4909-af91-3f533e9f3da6",
+              "name": "Competitor blog URL",
+              "value": "={{ $json[\"Competitor blog URL's\"].split(/\\r?\\n/) }}",
+              "type": "array"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        336,
+        -240
+      ],
+      "id": "842e9208-24cf-407f-8fec-cb2ce09dbcad",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "={{ $('Fetch Static Data - 6').item.json.documentID }}",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Sheet', ``, 'string') }}",
+          "cachedResultName": "",
+          "cachedResultUrl": ""
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "typeVersion": 4.7,
+      "position": [
+        2400,
+        1072
+      ],
+      "id": "ad5ba11e-d78e-4b68-9669-bfca323ffb20",
+      "name": "Get data from sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "J94NzlN3ImYhOp0X",
+          "name": "Google Sheets account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Client blog URL: {{ $('Edit Fields').item.json[\"Client blog URL\"] }}\n\nCompetitor blog URL: {{ $('Edit Fields').item.json[\"Competitor blog URL\"] }}",
+        "hasOutputParser": true,
+        "needsFallback": true,
+        "options": {
+          "systemMessage": "=You are a **Content Gap & Blog Strategy Report Generator**.  \nUse **only** the tool **Get data from sheet** (call it with `sheet_name = exact URL` the user provides).  \nNever scrape, browse, or use external/training knowledge. Do not fabricate.  \nThe tool **Get data from sheet** will provide an Excel sheet containing:  \n`URL, Title, Word Count, Summary, Key Points, Style Tone, Audience, Content Depth, Content Structure, Call to Action, Ranking Keywords, Suggestions`  \nfor both the client and competitor blogs.  \n\n---\n\n### Task\n- Compare the **client blog (provided Client Blog URL)** against all **competitor blogs (provided Competitor Blog URLs)**.  \n- For each comparison, identify **content gaps, missed opportunities, and overlapping themes**.  \n- Aggregate findings across all competitors to recommend **new blog topics** with:  \n  - Suggested post title  \n  - Estimated word count  \n  - Recommended unique angle / differentiation  \n\n---\n\n### Report Structure (Output must follow this format)\n\n1. **Executive Summary**  \n   - 3–4 sentences, high-level findings.  \n\n2. **Content Gap Analysis**  \n   - List of gaps where competitors cover topics the client does not.  \n   - Must be based on comparisons with each competitor blog.  \n   - Include references to sheet rows.  \n   - Format:  \n     ```json\n     [\n       { \"gap\": \"Topic A\", \"explanation\": \"Competitors go in-depth, client misses\", \"reference\": \"Row 12\" }\n     ]\n     ```\n\n3. **Recommended Topics**  \n   - 5–8 prioritized topics.  \n   - Format:  \n     ```json\n     [\n       { \"title\": \"How to Do X\", \"estimated_word_count\": 1200, \"unique_angle\": \"Beginner-friendly practical guide\" }\n     ]\n     ```\n\n4. **Competitor Insights**  \n   - 3–4 key takeaways on style, tone, audience, or structure.  \n   - Format:  \n     ```json\n     [\n       { \"insight\": \"Conversational tone\", \"evidence\": \"Seen in competitor blog Row 8, Row 15\" }\n     ]\n     ```\n\n5. **Next Steps**  \n   - 2–3 actionable recommendations.  \n   - Format:  \n     ```json\n     [\n       { \"step\": \"Expand keyword cluster ABC\", \"details\": \"Create pillar + supporting posts\" }\n     ]\n     ```\n\n---\n\n### Rules\n- Ground all findings **only** in sheet data.  \n- Always compare the **client blog URL** against each **competitor blog URL**.  \n- Do not invent or use external knowledge.  \n- Keep it concise, scannable, and client-ready."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        2288,
+        800
+      ],
+      "id": "be92593b-3eb2-4004-bd5e-7c11e7eea52b",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "={{ $('Fetch Static Data - 6').item.json.documentID }}",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "={{ $('Create Analysis Report').item.json.title || \"Analysis Report\" }}",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Section",
+              "displayName": "Section",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Content",
+              "displayName": "Content",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        2848,
+        800
+      ],
+      "id": "c01d0438-543d-4ae0-bb44-64d4d8576596",
+      "name": "Append row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "J94NzlN3ImYhOp0X",
+          "name": "Google Sheets account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-4o",
+          "mode": "list",
+          "cachedResultName": "gpt-4o"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        2048,
+        1072
+      ],
+      "id": "3289b9d5-02c9-4699-bea1-54145b62d9f9",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "ZptOw12dsHcYOy47",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const outputs = [];\n\nfunction capitaliseKey(k) {\n  return k.replace(/_/g, ' ').replace(/\\b\\w/g, c => c.toUpperCase());\n}\n\nfunction renderObjectAsBullet(obj) {\n  const priorityKeys = ['title', 'gap', 'insight', 'step', 'name'];\n  let headline = null;\n\n  for (const pk of priorityKeys) {\n    if (obj.hasOwnProperty(pk) && obj[pk]) {\n      headline = String(obj[pk]);\n      break;\n    }\n  }\n\n  if (!headline) {\n    const firstEntry = Object.entries(obj).find(([, v]) => typeof v === 'string' || typeof v === 'number');\n    if (firstEntry) headline = String(firstEntry[1]);\n    else {\n      const k = Object.keys(obj)[0];\n      headline = k ? `${capitaliseKey(k)}: ${String(obj[k])}` : JSON.stringify(obj);\n    }\n  }\n\n  const lines = [`• ${headline}`];\n\n  for (const [k, v] of Object.entries(obj)) {\n    if (v === undefined || v === null) continue;\n    if (String(v) === headline) continue;\n\n    const vStr = typeof v === 'object' ? JSON.stringify(v) : String(v);\n    lines.push(`    - ${capitaliseKey(k)}: ${vStr}`);\n  }\n\n  return lines.join('\\n');\n}\n\nfor (const item of items) {\n  const data = item.json?.output ?? item.output ?? item.json ?? {};\n\n  if (typeof data === 'object' && data !== null) {\n    for (const [sectionTitle, sectionContent] of Object.entries(data)) {\n      let formattedContent = \"\";\n\n      if (Array.isArray(sectionContent)) {\n        const lines = sectionContent.map(elem =>\n          typeof elem === 'object' && elem !== null\n            ? renderObjectAsBullet(elem)\n            : `• ${String(elem)}`\n        );\n        formattedContent = lines.join('\\n\\n');\n      } else if (typeof sectionContent === 'object' && sectionContent !== null) {\n        formattedContent = renderObjectAsBullet(sectionContent);\n      } else {\n        formattedContent = String(sectionContent);\n      }\n\n      outputs.push({\n        Section: sectionTitle,\n        Content: formattedContent\n      });\n    }\n  } else {\n    outputs.push({\n      Section: \"Raw Output\",\n      Content: String(data)\n    });\n  }\n}\n\nreturn outputs;\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2640,
+        800
+      ],
+      "id": "65a79493-a242-4fb2-9882-c3cde8b846e1",
+      "name": "Output Parser"
+    },
+    {
+      "parameters": {
+        "jsCode": "return [\n  {\n    \"Section\": null,\n    \"Content\": null,\n  }\n];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1888,
+        800
+      ],
+      "id": "e3fbe67e-1e99-4aeb-aefd-e613bed00b86",
+      "name": "Report Headers"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "={{ $('Fetch Static Data - 6').item.json.documentID }}",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "={{ $('Create Analysis Report').item.json.title || \"Analysis Report\" }}",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Section",
+              "displayName": "Section",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Content",
+              "displayName": "Content",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        2080,
+        800
+      ],
+      "id": "a3b7cf52-b5c4-4bda-a341-e15f5b0cf5d4",
+      "name": "Update Report Headers",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "J94NzlN3ImYhOp0X",
+          "name": "Google Sheets account 2"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.limit",
+      "typeVersion": 1,
+      "position": [
+        1184,
+        -432
+      ],
+      "id": "23582b66-1425-4af8-8316-f0e55257c398",
+      "name": "Limit"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "79edca53-c553-47dd-b403-851372e64401",
+              "leftValue": "={{ $('Search files in \"Competitive Content Analysis\" Folder').item.json }}",
+              "rightValue": "",
+              "operator": {
+                "type": "object",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1952,
+        -432
+      ],
+      "id": "89349868-4222-4d6a-ba48-bead8c7a5336",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "operation": "move",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $('Create Clients spreadsheet').item.json.spreadsheetId }}",
+          "mode": "id"
+        },
+        "driveId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "My Drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "1InvjXY4ESnEEYv6Z9jUob_UQEeYN1Dgq",
+          "mode": "list",
+          "cachedResultName": "Competitive Content Analysis",
+          "cachedResultUrl": "https://drive.google.com/drive/folders/1InvjXY4ESnEEYv6Z9jUob_UQEeYN1Dgq"
+        }
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        2480,
+        -352
+      ],
+      "id": "89f73e3e-a298-41b4-95e0-a9b0c8b84706",
+      "name": "Move file to \"Competitive Content Analysis\" Folder",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "ReRgbm9kzC07s2Sv",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "fileFolder",
+        "queryString": "={{ $('Limit').item.json.url }}",
+        "returnAll": true,
+        "filter": {
+          "folderId": {
+            "__rl": true,
+            "value": "1InvjXY4ESnEEYv6Z9jUob_UQEeYN1Dgq",
+            "mode": "list",
+            "cachedResultName": "Competitive Content Analysis",
+            "cachedResultUrl": "https://drive.google.com/drive/folders/1InvjXY4ESnEEYv6Z9jUob_UQEeYN1Dgq"
+          },
+          "whatToSearch": "files"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        1744,
+        -416
+      ],
+      "id": "8e422419-0aaa-4d56-ae57-700635a9f403",
+      "name": "Search files in \"Competitive Content Analysis\" Folder",
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "ReRgbm9kzC07s2Sv",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "spreadsheet",
+        "title": "={{ $('Limit').item.json.url }}",
+        "sheetsUi": {
+          "sheetValues": [
+            {
+              "title": "={{ $('Limit').item.json.url }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        2192,
+        -352
+      ],
+      "id": "7de5f525-8000-4ffd-ac76-c82c96a1f6ab",
+      "name": "Create Clients spreadsheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "J94NzlN3ImYhOp0X",
+          "name": "Google Sheets account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "create",
+        "documentId": {
+          "__rl": true,
+          "value": "={{ $json.documentID }}",
+          "mode": "id"
+        },
+        "title": "={{ $json.url }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1392,
+        -272
+      ],
+      "id": "666f83a5-cf2c-46e8-9d2d-a28e97ed2426",
+      "name": "Create Sheet's",
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "J94NzlN3ImYhOp0X",
+          "name": "Google Sheets account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        1184,
+        -96
+      ],
+      "id": "6082d0bc-398a-444a-9daf-8a78aadae452",
+      "name": "Loop Over each url"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "={{ $('Fetch Static Data - 2').item.json.documentID }}",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "={{ $('Loop Over each url').item.json.url }}",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "URL",
+              "displayName": "URL",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Title",
+              "displayName": "Title",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Word Count",
+              "displayName": "Word Count",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Summary",
+              "displayName": "Summary",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Key Points",
+              "displayName": "Key Points",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Style Tone",
+              "displayName": "Style Tone",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Audience",
+              "displayName": "Audience",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Content Depth",
+              "displayName": "Content Depth",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Content Structure",
+              "displayName": "Content Structure",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Call to Action",
+              "displayName": "Call to Action",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Ranking Keywords",
+              "displayName": "Ranking Keywords",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Suggestions",
+              "displayName": "Suggestions",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        2048,
+        -80
+      ],
+      "id": "ad3577b1-f278-4ee4-a722-90125bed00ba",
+      "name": "Update Headers",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "J94NzlN3ImYhOp0X",
+          "name": "Google Sheets account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "return [\n  {\n    \"URL\": null,\n    \"Title\": null,\n    \"Word Count\": null,\n    \"Summary\": null,\n    \"Key Points\": null,\n    \"Style Tone\": null,\n    \"Audience\": null,\n    \"Content Depth\": null,\n    \"Content Structure\": null,\n    \"Call to Action\": null,\n    \"Ranking Keywords\": null,\n    \"Suggestions\": null\n  }\n];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1824,
+        -80
+      ],
+      "id": "bca13a79-eee1-4619-98a1-929c1b7765db",
+      "name": "Headers"
+    },
+    {
+      "parameters": {
+        "jsCode": "// initialize staticData object\nconst workflowStaticData = $getWorkflowStaticData('global');\n\n// initialize documentID on staticData if it desn't exist yet\nif (!workflowStaticData.hasOwnProperty('documentID')) {\n  workflowStaticData.documentID = $('Search files in \"Competitive Content Analysis\" Folder').first().json.id\n}\n\n// initializing any other variables on the staticData object\nif (!workflowStaticData.hasOwnProperty('timestamp')) {\n  workflowStaticData.timestamp = $now.toISO()\n}\n\nreturn [\n  {\n      // data: $input.all(),\n      documentID: workflowStaticData.documentID,\n      timestamp: workflowStaticData.timestamp,\n      // today: $today\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2192,
+        -512
+      ],
+      "id": "de57315e-1bd6-46a7-97f2-0d6b2cdda829",
+      "name": "Save Static Data"
+    },
+    {
+      "parameters": {
+        "jsCode": "const workflowStaticData = $getWorkflowStaticData('global');\n\nfor (const item of $input.all()) {\n  item.json.documentID = workflowStaticData.documentID\n  item.json.timestamp = workflowStaticData.timestamp\n}\n\nreturn $input.all();\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1168,
+        -272
+      ],
+      "id": "a79954eb-e459-4348-b1b6-540ae40dee07",
+      "name": "Fetch Static Data",
+      "alwaysOutputData": false
+    },
+    {
+      "parameters": {
+        "jsCode": "const workflowStaticData = $getWorkflowStaticData('global');\n\nfor (const item of $input.all()) {\n  item.json.documentID = workflowStaticData.documentID\n  item.json.timestamp = workflowStaticData.timestamp\n}\n\nreturn $input.all();\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1600,
+        -80
+      ],
+      "id": "749701e3-53e5-47e7-a3cc-18b24ed8f054",
+      "name": "Fetch Static Data - 2",
+      "alwaysOutputData": false
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "={{ $('Fetch Static Data - 3').item.json.documentID }}",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "={{ $('Loop Over each url').item.json.url }}",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "URL": "={{ $json.url }}"
+          },
+          "matchingColumns": [
+            "URL"
+          ],
+          "schema": [
+            {
+              "id": "URL",
+              "displayName": "URL",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Title",
+              "displayName": "Title",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Word Count",
+              "displayName": "Word Count",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Summary",
+              "displayName": "Summary",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Key Points",
+              "displayName": "Key Points",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Style Tone",
+              "displayName": "Style Tone",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Audience",
+              "displayName": "Audience",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Content Depth",
+              "displayName": "Content Depth",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Content Structure",
+              "displayName": "Content Structure",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Call to Action",
+              "displayName": "Call to Action",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Ranking Keywords",
+              "displayName": "Ranking Keywords",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Suggestions",
+              "displayName": "Suggestions",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        2544,
+        64
+      ],
+      "id": "79cd316f-e056-45b7-9968-23a583bf5e58",
+      "name": "Save Blog's URL",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "J94NzlN3ImYhOp0X",
+          "name": "Google Sheets account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const result = [];\nconst seen = new Set();\n\nitems.forEach(item => {\n  // Handle both wrapped and unwrapped structures\n  let content = item.json?.choices?.[0]?.message?.content \n             || item.choices?.[0]?.message?.content;\n\n  if (content) {\n    let links;\n\n    try {\n      // Try parsing as-is\n      links = JSON.parse(content);\n    } catch (e) {\n      // If parsing fails, handle code-fenced JSON\n      const fenced = content.match(/```json\\s*([\\s\\S]*?)\\s*```/);\n      if (fenced) {\n        try {\n          links = JSON.parse(fenced[1]);\n        } catch (err) {\n          links = [];\n        }\n      } else {\n        // Otherwise, try to extract the first JSON array in the string\n        const arrayMatch = content.match(/\\[[\\s\\S]*\\]/);\n        if (arrayMatch) {\n          try {\n            links = JSON.parse(arrayMatch[0]);\n          } catch (err) {\n            links = [];\n          }\n        } else {\n          links = [];\n        }\n      }\n    }\n\n    // Add to results if we got an array\n    if (Array.isArray(links)) {\n      links.forEach(link => {\n        const clean = String(link).trim();\n        if (clean && !seen.has(clean)) {\n          seen.add(clean);\n          result.push({ url: clean });\n        }\n      });\n    }\n  }\n});\n\nreturn result;\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2048,
+        80
+      ],
+      "id": "4e2dfe19-d529-45bb-83b0-69b376e8892f",
+      "name": "Parse the URL's",
+      "alwaysOutputData": false
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/chat/completions",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "openAiApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"gpt-4o-search-preview\",\n  \"messages\": [\n    {\n      \"role\": \"system\",\n      \"content\": \"You are a strict web-scraping assistant with real-time browsing. Do not invent or guess URLs. Extract only links that actually exist in the rendered HTML/DOM. Limit scope to the exact origin (scheme + host + port) of the provided URL; exclude other domains and subdomains. When an href is relative, resolve it to absolute using the document's <base> href if present, otherwise the page origin. Normalize and deduplicate URLs by: removing fragments (#...), removing common tracking query params (utm_*, gclid, fbclid), collapsing duplicate trailing slashes, and lowercasing scheme and host (not the path). Prefer the canonical URL if an article page provides <link rel=\\\"canonical\\\">. Keep only HTML pages.\\n\\nBefore including any URL in the final result, **make an HTTP request to confirm it is reachable and returns an HTML document (status code 200 and content-type text/html)**. Discard any that result in 404s, redirects to homepages, non-HTML content, or other errors.\\n\\n**Strictly return a valid JSON array as the output. Do not include any prose, explanations, code fences, keys, labels, or formatting instructions. Only the raw JSON array of URLs must be returned.**\"\n    },\n    {\n      \"role\": \"user\",\n      \"content\": \"**Target website**: {{ $json.url }}\\n\\nGoal: Return the first 50 unique blog-post URLs discovered on this website.\\n\\nRequirements:\\n- \\\"Blog-post URLs\\\" means links to individual articles/posts only; exclude category/tag/author/home/search pages, archive listings, feeds, PDFs, and file downloads.\\n- Discover and follow pagination mechanisms: numbered pages, next/prev links, load-more buttons, and infinite scroll. Interact as needed until you collect 50 unique posts.\\n- Collect links only by reading <a> elements' href attributes found in the rendered HTML/DOM after interactions. Never construct URLs from titles or patterns. Never infer slugs.\\n- Keep only URLs that start with the exact origin of the target website.\\n- Resolve relative hrefs to absolute as described in the system message.\\n- Deduplicate using the normalization rules above. Do not exceed 50.\\n- If fewer than 50 exist, return only the ones actually found; never fabricate.\\n- **Before including a URL, verify that it is reachable and returns an HTML page (status 200 and content-type text/html). Discard broken or unreachable links.**\\n\\n**Return a valid JSON array of URLs only. No explanation, no code block, no text — only the JSON array.**\"\n    }\n  ]\n}\n",
+        "options": {
+          "allowUnauthorizedCerts": true,
+          "response": {
+            "response": {
+              "neverError": true,
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1824,
+        80
+      ],
+      "id": "fb48760f-5eb1-4ea7-b2af-c62f64a6c78e",
+      "name": " OpenAI: Scrap Blogs List",
+      "credentials": {
+        "openAiApi": {
+          "id": "ZptOw12dsHcYOy47",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const workflowStaticData = $getWorkflowStaticData('global');\n\nfor (const item of $input.all()) {\n  item.json.documentID = workflowStaticData.documentID\n  item.json.timestamp = workflowStaticData.timestamp\n}\n\nreturn $input.all();\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1600,
+        80
+      ],
+      "id": "7d0a3923-7d94-4dac-bde6-853ff7247982",
+      "name": "Fetch Static Data - 3",
+      "alwaysOutputData": false
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.firecrawl.dev/v1/scrape",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n\t\"url\": \"{{ $('Fetch Untouched Data').item.json.URL }}\",\n\t\"formats\": [ \"markdown\" ],\n\t\"onlyMainContent\": true,\n\t\"parsePDF\": false,\n\t\"maxAge\": 172800000,\n\t\"timeout\": 300000\n}",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2064,
+        288
+      ],
+      "id": "e5faffd4-96db-443c-aa94-31e2b3cf4d96",
+      "name": "FireCrawl: Scrape Blog Page",
+      "alwaysOutputData": true,
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "AXkrl87jajAotejo",
+          "name": "Firecrawl"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "={{ $('Fetch Static Data - 4').item.json.documentID }}",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "={{ $json.url }}",
+          "mode": "name"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "=Title"
+            },
+            {
+              "lookupColumn": "=Summary"
+            }
+          ]
+        },
+        "combineFilters": "OR",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1840,
+        288
+      ],
+      "id": "5b440111-bee5-4dff-a96d-8171d13f8e49",
+      "name": "Fetch Untouched Data",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "J94NzlN3ImYhOp0X",
+          "name": "Google Sheets account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "={{ $('Fetch Static Data - 4').item.json.documentID }}",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "={{ $('Loop Over each url').item.json.url }}",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Title": "={{ $('FireCrawl: Scrape Blog Page').item.json.data.metadata.ogTitle }}",
+            "Suggestions": "={{ $json.output.improvement_suggestions }}",
+            "Call to Action": "={{ $json.output.call_to_action }}",
+            "Content Structure": "={{ $json.output.content_structure }}",
+            "Content Depth": "={{ $json.output.content_depth }}",
+            "Audience": "={{ $json.output.audience }}",
+            "Style Tone": "={{ $json.output.style_tone }}",
+            "Key Points": "={{ $json.output.key_points }}",
+            "Summary": "={{ $json.output.summary || $json.output.error }}",
+            "URL": "={{ $('Fetch Untouched Data').item.json.URL }}",
+            "Word Count": "={{ $('Calculate the word count').item.json.wordCount }}"
+          },
+          "matchingColumns": [
+            "URL"
+          ],
+          "schema": [
+            {
+              "id": "URL",
+              "displayName": "URL",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Title",
+              "displayName": "Title",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Word Count",
+              "displayName": "Word Count",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Summary",
+              "displayName": "Summary",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Key Points",
+              "displayName": "Key Points",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Style Tone",
+              "displayName": "Style Tone",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Audience",
+              "displayName": "Audience",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Content Depth",
+              "displayName": "Content Depth",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Content Structure",
+              "displayName": "Content Structure",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Call to Action",
+              "displayName": "Call to Action",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Ranking Keywords",
+              "displayName": "Ranking Keywords",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Suggestions",
+              "displayName": "Suggestions",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        3424,
+        288
+      ],
+      "id": "54f77c40-381a-4550-9af2-9a5061dc496c",
+      "name": "Update Records with LLM data",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "J94NzlN3ImYhOp0X",
+          "name": "Google Sheets account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "for (const item of $input.all()) {\n  const markdown = item.json.data?.markdown || '';\n  const statusCode = item.json.data?.metadata?.statusCode || 0;\n\n  const wordCount = statusCode === 200\n    ? markdown.trim().split(/\\s+/).length\n    : 0;\n\n  // Add word count to item\n  item.json.wordCount = wordCount;\n}\n\nreturn $input.all();"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2288,
+        288
+      ],
+      "id": "e7a0ec54-280b-4943-a8db-f3cccad2feec",
+      "name": "Calculate the word count"
+    },
+    {
+      "parameters": {
+        "jsCode": "const workflowStaticData = $getWorkflowStaticData('global');\n\nfor (const item of $input.all()) {\n  item.json.documentID = workflowStaticData.documentID\n  item.json.timestamp = workflowStaticData.timestamp\n}\n\nreturn $input.all();\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1616,
+        288
+      ],
+      "id": "04b6e3b0-4bad-42f5-a359-c583ae5ac4c3",
+      "name": "Fetch Static Data - 4",
+      "alwaysOutputData": false
+    },
+    {
+      "parameters": {
+        "url": "https://api.semrush.com",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "type",
+              "value": "url_organic"
+            },
+            {
+              "name": "key",
+              "value": "205ec14f751a722537406cfc3717948b"
+            },
+            {
+              "name": "url",
+              "value": "={{ $json.URL }}"
+            },
+            {
+              "name": "database",
+              "value": "us"
+            },
+            {
+              "name": "export_columns",
+              "value": "Ph,Po,Ur,Tr,Nq,Cp,Co,Nr,Td"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2048,
+        480
+      ],
+      "id": "103a111b-a1f0-4238-8a61-8337794ab801",
+      "name": "SEMRush: Fetch Keywords"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "={{ $('Fetch Static Data - 5').item.json.documentID }}",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "={{ $json.url }}",
+          "mode": "name"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "=Ranking Keywords"
+            }
+          ]
+        },
+        "combineFilters": "OR",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1824,
+        480
+      ],
+      "id": "11be8f39-fcb1-4323-88da-61b285313e47",
+      "name": "Get Required data for SEMrush",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "J94NzlN3ImYhOp0X",
+          "name": "Google Sheets account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const groupedResults = [];\n\nfor (const item of $input.all()) {\n  const dataString = item.json.data;\n  \n  const result = {\n    keywords: []\n  };\n\n  // If SEMrush returned an error, include empty keywords\n  if (dataString.startsWith('ERROR')) {\n    groupedResults.push({ json: result });\n    continue;\n  }\n\n  const lines = dataString.trim().split('\\r\\n');\n  const headers = lines[0].split(';');\n  const keywords = [];\n\n  for (let i = 1; i < lines.length; i++) {\n    const values = lines[i].split(';');\n    const obj = {};\n\n    for (let j = 0; j < headers.length; j++) {\n      const header = headers[j].trim();\n      const value = values[j]?.trim();\n      const num = Number(value);\n      obj[header] = isNaN(num) || value === '' ? value : num;\n    }\n\n    keywords.push(obj);\n  }\n\n  // Sort keywords by ascending position (best rank)\n  keywords.sort((a, b) => a['Position'] - b['Position']);\n\n  result.keywords = keywords.slice(0, 5);\n\n  groupedResults.push({ json: result });\n}\n\nreturn groupedResults;\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2272,
+        480
+      ],
+      "id": "cbf2f471-e95d-479f-bc9c-18866a122f4b",
+      "name": "Code",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "={{ $('Fetch Static Data - 5').item.json.documentID }}",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "={{ $('Loop Over each url').item.json.url }}",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "URL": "={{ $('Get Required data for SEMrush').item.json.URL }}",
+            "Ranking Keywords": "={{ $json.keywords.map(k => \n  `Keyword: ${k.Keyword}\\nPosition: ${k.Position}\\nURL: ${k.Url}\\nTraffic (%): ${k[\"Traffic (%)\"]}\\nSearch Volume: ${k[\"Search Volume\"]}\\nCPC: ${k.CPC}\\nCompetition: ${k.Competition}\\nNumber of Results: ${k[\"Number of Results\"]}\\nTrends: ${k.Trends}`\n).join('\\n\\n') }}"
+          },
+          "matchingColumns": [
+            "URL"
+          ],
+          "schema": [
+            {
+              "id": "URL",
+              "displayName": "URL",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Title",
+              "displayName": "Title",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Word Count",
+              "displayName": "Word Count",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Summary",
+              "displayName": "Summary",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Key Points",
+              "displayName": "Key Points",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Style Tone",
+              "displayName": "Style Tone",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Audience",
+              "displayName": "Audience",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Content Depth",
+              "displayName": "Content Depth",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Content Structure",
+              "displayName": "Content Structure",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Call to Action",
+              "displayName": "Call to Action",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Ranking Keywords",
+              "displayName": "Ranking Keywords",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Suggestions",
+              "displayName": "Suggestions",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        2512,
+        480
+      ],
+      "id": "c4aa797a-7534-4c16-b0a6-17c4ab2e9d93",
+      "name": "Update SEMrush data",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "J94NzlN3ImYhOp0X",
+          "name": "Google Sheets account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const workflowStaticData = $getWorkflowStaticData('global');\n\nfor (const item of $input.all()) {\n  item.json.documentID = workflowStaticData.documentID\n  item.json.timestamp = workflowStaticData.timestamp\n}\n\nreturn $input.all();\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1600,
+        480
+      ],
+      "id": "a08cb510-2d4f-4c99-b63d-8097b74ff164",
+      "name": "Fetch Static Data - 5",
+      "alwaysOutputData": false
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "09c46c06-1e55-4af3-bc19-80ae95280180",
+              "leftValue": "={{ $('Parse the URL\\'s').item.json }}",
+              "rightValue": "",
+              "operator": {
+                "type": "object",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        2272,
+        80
+      ],
+      "id": "a944d10b-d948-4941-86f1-479a72efaae3",
+      "name": "If-1"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are a blog content analyst.\nGiven the full content of a blog article, analyze it in detail. Your goal is to provide a structured summary that includes everything a content strategist would need to compare and evaluate blogs.\n\nYour output must include:\n\n```\n{\n  \"type\": \"blog\" | \"non-blog\",\n  \"summary\": \"A detailed summary of what the article is about (main topic, structure, sections).\",\n  \"style_tone\": \"Describe the writing style and tone (e.g. casual, informative, promotional, expert-level).\",\n  \"key_points\": [\"List of key takeaways, insights, or arguments made in the article.\"],\n  \"audience\": \"Who the content is written for (e.g. families, adventure travelers, beginners, experts).\",\n  \"content_depth\": \"Briefly assess whether the content is shallow, moderate, or in-depth.\",\n  \"call_to_action\": \"Does the article contain a CTA? If yes, what is it?\",\n  \"content_structure\": \"Describe how the article is structured (e.g. listicle, how-to guide, narrative, etc.).\",\n  \"improvement_suggestions\": \"What is missing from this article? What could be added to improve value for readers?\"\n}\n```\n\n\n[START OF ARTICLE]\n{{ $json.data.markdown }}\n[END OF ARTICLE]",
+        "hasOutputParser": true,
+        "needsFallback": true,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        2848,
+        288
+      ],
+      "id": "49fb478f-ef25-45bd-81e9-547c31086fd7",
+      "name": "AI Agent-1"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        2944,
+        496
+      ],
+      "id": "04ca7054-62f6-4973-a2bf-d034e287167d",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "EDJr9RDlJcoxIm7G",
+          "name": "Google Gemini(PaLM) API - Stryde Account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"type\": \"blog | non-blog\",\n  \"summary\": \"A detailed summary of what the article is about (main topic, structure, sections).\",\n  \"style_tone\": \"Describe the writing style and tone (e.g. casual, informative, promotional, expert-level).\",\n  \"key_points\": [\"List of key takeaways, insights, or arguments made in the article.\"],\n  \"audience\": \"Who the content is written for (e.g. families, adventure travelers, beginners, experts).\",\n  \"content_depth\": \"Briefly assess whether the content is shallow, moderate, or in-depth.\",\n  \"call_to_action\": \"Does the article contain a CTA? If yes, what is it?\",\n  \"content_structure\": \"Describe how the article is structured (e.g. listicle, how-to guide, narrative, etc.).\",\n  \"improvement_suggestions\": \"What is missing from this article? What could be added to improve value for readers?\"\n}",
+        "autoFix": true
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        3088,
+        496
+      ],
+      "id": "187922ec-b577-47dd-8571-5826d5f782db",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4.1-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        3072,
+        688
+      ],
+      "id": "d22126f7-ab03-4a0e-9a63-f78f6e3871dc",
+      "name": "OpenAI Chat Model - 2",
+      "credentials": {
+        "openAiApi": {
+          "id": "ZptOw12dsHcYOy47",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-4o",
+          "mode": "list",
+          "cachedResultName": "gpt-4o"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        2784,
+        496
+      ],
+      "id": "a6f8dc17-287d-4881-a477-c5eb0cc48d4b",
+      "name": "OpenAI Chat Model - 1",
+      "credentials": {
+        "openAiApi": {
+          "id": "ZptOw12dsHcYOy47",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const workflowStaticData = $getWorkflowStaticData('global');\n\nfor (const item of $input.all()) {\n  item.json.documentID = workflowStaticData.documentID\n  item.json.timestamp = workflowStaticData.timestamp\n}\n\nreturn $input.all();\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1472,
+        800
+      ],
+      "id": "b733130e-b9fc-490f-b7ef-ee0bb7db4ca2",
+      "name": "Fetch Static Data - 6",
+      "alwaysOutputData": false
+    },
+    {
+      "parameters": {
+        "operation": "create",
+        "documentId": {
+          "__rl": true,
+          "value": "={{ $json.documentID }}",
+          "mode": "id"
+        },
+        "title": "Analysis Report",
+        "options": {
+          "index": 0
+        }
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1696,
+        800
+      ],
+      "id": "78a93339-098f-480f-9f0d-7d3561ac6ab0",
+      "name": "Create Analysis Report",
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "J94NzlN3ImYhOp0X",
+          "name": "Google Sheets account 2"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.limit",
+      "typeVersion": 1,
+      "position": [
+        1264,
+        800
+      ],
+      "id": "bdfd19f2-5723-45c8-9454-57fdff7e25a9",
+      "name": "Limit1"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        2224,
+        1072
+      ],
+      "id": "a0e4d4d7-e324-4fe5-8e2e-91b32f705deb",
+      "name": "Google Gemini Chat Model1",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "EDJr9RDlJcoxIm7G",
+          "name": "Google Gemini(PaLM) API - Stryde Account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"Executive Summary\": \"3–4 sentence summary here...\",\n  \"Content Gap Analysis\": [\n    {\n      \"gap\": \"Topic A\",\n      \"explanation\": \"Competitors go in-depth, client misses\",\n      \"reference\": \"Row 12\"\n    },\n    {\n      \"gap\": \"Topic B\",\n      \"explanation\": \"Client lacks keyword targeting\",\n      \"reference\": \"Row 21\"\n    }\n  ],\n  \"Recommended Topics\": [\n    {\n      \"title\": \"How to Automate Pool Cleaning\",\n      \"estimated_word_count\": 1300,\n      \"unique_angle\": \"Written for DIY pool owners\"\n    },\n    {\n      \"title\": \"Benefits of Saltwater Pools\",\n      \"estimated_word_count\": 1000,\n      \"unique_angle\": \"Focus on health and maintenance\"\n    }\n  ],\n  \"Competitor Insights\": [\n    {\n      \"insight\": \"Conversational tone\",\n      \"evidence\": \"Seen in competitor blog Row 8, Row 15\"\n    },\n    {\n      \"insight\": \"Use of FAQs at end of posts\",\n      \"evidence\": \"Common in Row 10, Row 13\"\n    }\n  ],\n  \"Next Steps\": [\n    {\n      \"step\": \"Expand keyword cluster 'pool automation'\",\n      \"details\": \"Create pillar + supporting blog series\"\n    },\n    {\n      \"step\": \"Revise CTA placement\",\n      \"details\": \"Move CTA higher on pages with <800 words\"\n    }\n  ]\n}\n",
+        "autoFix": true
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        2544,
+        1072
+      ],
+      "id": "2e406073-058b-4606-a607-8e0c63ecb908",
+      "name": "Structured Output Parser - 1"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4.1-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        2544,
+        1248
+      ],
+      "id": "efdea98a-aba4-4d73-8c72-87e49f930869",
+      "name": "OpenAI Chat Model - 3",
+      "credentials": {
+        "openAiApi": {
+          "id": "ZptOw12dsHcYOy47",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('On form submission').first().json['Your Email (To Receive Notifications)'] }}",
+        "subject": "Competitive Content Analysis & Recommendations completed",
+        "emailType": "text",
+        "message": "=Competitive Content Analysis & Recommendations completed.\n\nPlease find the Google Sheet here: https://docs.google.com/spreadsheets/d/{{ $('Fetch Static Data - 6').item.json.documentID }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        3056,
+        800
+      ],
+      "id": "8a9d2a6a-9cf6-4ecf-9466-8057cc424af6",
+      "name": "Send a message",
+      "webhookId": "29aab627-39de-4892-a488-fded391bf8e6",
+      "executeOnce": true,
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "w9BcyMuS4x5Lccdg",
+          "name": "Gmail account"
+        }
+      }
+    }
+  ],
+  "pinData": {
+    "On form submission": [
+      {
+        "json": {
+          "Client blog URL": "https://www.vitafilters.com/blogs/news",
+          "Competitor blog URL's": "https://www.thepoolfactory.com/blogs/pool-care\r\nhttps://www.poolsupplies.com/blog\r\nhttps://poolheatpumps.com/blog/posts/",
+          "Your Email (To Receive Notifications)": "nalsieze@gmail.com",
+          "submittedAt": "2025-09-01T00:01:28.343-06:00",
+          "formMode": "test"
+        }
+      }
+    ]
+  },
+  "connections": {
+    "On form submission": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Combine URL's": {
+      "main": [
+        [
+          {
+            "node": "Limit",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Loop Over each url",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Fetch Static Data",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Limit1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Combine URL's",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get data from sheet": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Output Parser",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Output Parser": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Report Headers": {
+      "main": [
+        [
+          {
+            "node": "Update Report Headers",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Report Headers": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append row in sheet": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Limit": {
+      "main": [
+        [
+          {
+            "node": "Search files in \"Competitive Content Analysis\" Folder",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Save Static Data",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Create Clients spreadsheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search files in \"Competitive Content Analysis\" Folder": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Clients spreadsheet": {
+      "main": [
+        [
+          {
+            "node": "Move file to \"Competitive Content Analysis\" Folder",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over each url": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Fetch Static Data - 2",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Fetch Static Data - 3",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Fetch Static Data - 4",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Fetch Static Data - 5",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Loop Over each url",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Headers": {
+      "main": [
+        [
+          {
+            "node": "Update Headers",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Move file to \"Competitive Content Analysis\" Folder": {
+      "main": [
+        [
+          {
+            "node": "Search files in \"Competitive Content Analysis\" Folder",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save Static Data": {
+      "main": [
+        []
+      ]
+    },
+    "Fetch Static Data": {
+      "main": [
+        [
+          {
+            "node": "Create Sheet's",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Static Data - 2": {
+      "main": [
+        [
+          {
+            "node": "Headers",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse the URL's": {
+      "main": [
+        [
+          {
+            "node": "If-1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    " OpenAI: Scrap Blogs List": {
+      "main": [
+        [
+          {
+            "node": "Parse the URL's",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Static Data - 3": {
+      "main": [
+        [
+          {
+            "node": " OpenAI: Scrap Blogs List",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "FireCrawl: Scrape Blog Page": {
+      "main": [
+        [
+          {
+            "node": "Calculate the word count",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Untouched Data": {
+      "main": [
+        [
+          {
+            "node": "FireCrawl: Scrape Blog Page",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calculate the word count": {
+      "main": [
+        [
+          {
+            "node": "AI Agent-1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Static Data - 4": {
+      "main": [
+        [
+          {
+            "node": "Fetch Untouched Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SEMRush: Fetch Keywords": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Required data for SEMrush": {
+      "main": [
+        [
+          {
+            "node": "SEMRush: Fetch Keywords",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "Update SEMrush data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Static Data - 5": {
+      "main": [
+        [
+          {
+            "node": "Get Required data for SEMrush",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If-1": {
+      "main": [
+        [
+          {
+            "node": "Save Blog's URL",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": " OpenAI: Scrap Blogs List",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent-1": {
+      "main": [
+        [
+          {
+            "node": "Update Records with LLM data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent-1",
+            "type": "ai_languageModel",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI Agent-1",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model - 2": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Structured Output Parser",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model - 1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent-1",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Static Data - 6": {
+      "main": [
+        [
+          {
+            "node": "Create Analysis Report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Analysis Report": {
+      "main": [
+        [
+          {
+            "node": "Report Headers",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Limit1": {
+      "main": [
+        [
+          {
+            "node": "Fetch Static Data - 6",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser - 1": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model - 3": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Structured Output Parser - 1",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "5aea2000-c9cb-490d-aaa0-8073621e9dab",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "f6c9eca423303bc1338431b2d767240311861a79c682ac7ab617cf9629046de0"
+  },
+  "id": "5wqo32Rp4q6YbBjl",
+  "tags": []
+}
