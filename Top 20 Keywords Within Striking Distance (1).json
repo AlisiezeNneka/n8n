@@ -1,0 +1,1899 @@
+{
+  "name": "Top 20 Keywords Within Striking Distance",
+  "nodes": [
+    {
+      "parameters": {
+        "formTitle": "Top 20 Keywords In Striking Distance",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Client URL",
+              "placeholder": "Enter the exact URL you want to analyze"
+            },
+            {
+              "fieldLabel": "Keywords to be Excluded",
+              "placeholder": "keyword,keyword,keyword"
+            },
+            {
+              "fieldLabel": "Your Email (To Receive Notifications)",
+              "requiredField": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.2,
+      "position": [
+        -848,
+        -192
+      ],
+      "id": "73dafc72-2168-49fc-a942-6e87e0cf17a7",
+      "name": "On form submission",
+      "webhookId": "2e115008-0c6f-40d8-b715-5f09ef7ff02e"
+    },
+    {
+      "parameters": {
+        "url": "=https://api.semrush.com/?type=domain_organic&key=205ec14f751a722537406cfc3717948b&domain={{ $json.url }}&database=us&display_limit=250&export_columns=Ph,Po,Nq,Kd,Ur&excl={{ $json.excludes }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1632,
+        -144
+      ],
+      "id": "18d54b3b-f26f-44d6-a4b8-13af33656559",
+      "name": "Semrush Keyword research"
+    },
+    {
+      "parameters": {
+        "jsCode": "function cleanStr(s) {\n  return String(s || \"\")\n    .replace(/\\s+/g, \" \")\n    .replace(/^[\\s,|]+|[\\s,|]+$/g, \"\")\n    .trim();\n}\n\nfunction splitCsv(str) {\n  return cleanStr(str)\n    .split(\",\")\n    .map(s => s.trim())\n    .filter(Boolean);\n}\n\nfunction normalizeUrl(u) {\n  u = u.trim();\n  if (!/^https?:\\/\\/www\\./i.test(u)) {\n    u = u.replace(/^https?:\\/\\//i, \"\"); // Remove existing protocol if any\n    u = u.replace(/^www\\./i, \"\");       // Remove existing www if any\n    return \"https://www.\" + u;\n  }\n  return u;\n}\n\nconst input = items[0]?.json || {};\nconst rawUrls = cleanStr(input[\"Client URL\"] || input[\"Client URLs\"] || \"\");\nconst rawExclude = cleanStr(input[\"Keywords to be Excluded\"] || \"\");\n\nif (!rawUrls) {\n  throw new Error(\"Client URL is required\");\n}\n\nconst urls = rawUrls\n  .split(\",\")\n  .map(s => normalizeUrl(s))\n  .filter(Boolean);\n\nlet excludeGroups = [];\nif (rawExclude.includes(\"|\")) {\n  excludeGroups = rawExclude\n    .split(\"|\")\n    .map(g => splitCsv(g).map(t => t.toLowerCase()));\n} else {\n  excludeGroups = [splitCsv(rawExclude).map(t => t.toLowerCase())];\n}\n\nconst perUrlExcludes = excludeGroups.length === urls.length\n  ? excludeGroups\n  : urls.map(() => excludeGroups[0] || []);\n\nreturn urls.map((u, i) => ({\n  json: {\n    url: u,\n    excludes: perUrlExcludes[i]\n  }\n}));\n\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1184,
+        -192
+      ],
+      "id": "8dfb35f6-25c1-4fba-b614-6f950c6b7636",
+      "name": "Code"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        1408,
+        -192
+      ],
+      "id": "85786b2a-6cfd-4e70-996b-e2a0b85f2d21",
+      "name": "Loop Over Items"
+    },
+    {
+      "parameters": {
+        "resource": "spreadsheet",
+        "title": "={{ $json[\"Client URL\"] }}",
+        "sheetsUi": {
+          "sheetValues": [
+            {
+              "title": "Keywords"
+            },
+            {
+              "title": "Competitors"
+            },
+            {
+              "title": "Five recommendations"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -624,
+        -192
+      ],
+      "id": "4a7b150b-9eb7-4ac7-8c56-722f8d706364",
+      "name": "Create spreadsheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "RroGs0ItAYq4Nln4",
+          "name": "Google Sheets account 6"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = items[0].json;\n\nconst rawQueryUrl = input.query_url;\nconst csv = input.data;\n\nif (!rawQueryUrl) throw new Error(\"Missing query URL\");\nif (!csv) throw new Error(\"Missing CSV data\");\n\nfunction normalizePath(raw) {\n  if (!raw) return null;\n  let str = String(raw).trim()\n    .replace(/^(https?:)?\\/\\//i, \"\") // remove http(s):// or //\n    .replace(/^www\\./i, \"\");         // remove leading www.\n\n  const firstSlash = str.indexOf(\"/\");\n  let host = str;\n  let path = \"\";\n  if (firstSlash !== -1) {\n    host = str.substring(0, firstSlash);\n    path = str.substring(firstSlash);\n  }\n  path = path.replace(/\\/+$/, \"\"); // strip trailing slash\n  return host + path;\n}\n\nfunction parseCSV(text) {\n  const lines = String(text).trim().split(/\\r?\\n/);\n  const headers = lines[0].split(\";\").map(h => h.trim());\n  return lines.slice(1).map(line => {\n    const values = line.split(\";\").map(v => v.trim());\n    const row = {};\n    headers.forEach((h, i) => row[h] = values[i] || \"\");\n    return row;\n  });\n}\n\nconst queryPath = normalizePath(rawQueryUrl);\nif (!queryPath) throw new Error(`Invalid query URL after cleanup: ${rawQueryUrl}`);\n\nconst rows = parseCSV(csv);\nconst results = [];\n\nfor (const row of rows) {\n  const rowPath = normalizePath(row.Url);\n  if (!rowPath || rowPath !== queryPath) continue;\n\n  const pos = parseInt(row.Position, 10);\n  const vol = parseInt(row[\"Search Volume\"], 10);\n  const kd = Math.round(parseFloat(row[\"Keyword Difficulty\"] || \"0\"));\n\n  if (pos >= 5 && pos <= 15 && vol >= 500) {\n    results.push({\n      json: {\n        keyword: row.Keyword,\n        position: pos,\n        volume: vol,\n        kd,\n        ranking_url: row.Url\n      }\n    });\n  }\n}\n\nreturn results.length\n  ? results.sort((a, b) => b.json.volume - a.json.volume).slice(0, 20)\n  : [{\n      json: {\n        message: `No keywords matched for ${queryPath}`,\n        note: \"Exact host+path match required, Position 5–15, Volume ≥ 500\"\n      }\n    }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2080,
+        -528
+      ],
+      "id": "52f2f9ae-5947-4469-b166-909e150e1a94",
+      "name": "Code1"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "52524fc5-b635-4742-8975-cfe667b22238",
+              "name": "rows",
+              "value": "Keyword,Position,Volume,KD%,URL,Title Tag,Meta Description,Heading Tag,# of Words On Page,Keyword Present On Page?,Number of Times On Page",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -384,
+        -192
+      ],
+      "id": "2255a200-44df-476f-83d4-31b88f787bb0",
+      "name": "Edit Fields1"
+    },
+    {
+      "parameters": {
+        "jsCode": "return [\n  {\n    json: {\n      data: [ $json.rows.split(',') ]\n    }\n  }\n];\n\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -160,
+        -192
+      ],
+      "id": "a1298133-6b47-4afb-a966-406746490aee",
+      "name": "Create Headers"
+    },
+    {
+      "parameters": {
+        "jsCode": "return [\n  {\n    json: {\n      data: [ $json.rows.split(',') ]\n    }\n  }\n];\n\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        512,
+        -192
+      ],
+      "id": "84a4357c-19b9-4558-9d2a-e005f6c44b2b",
+      "name": "Create Headers1"
+    },
+    {
+      "parameters": {
+        "method": "PUT",
+        "url": "=https://sheets.googleapis.com/v4/spreadsheets/{{ $('Create spreadsheet').first().json.spreadsheetId }}/values/{{ $('Create spreadsheet').first().json.sheets[0].properties.title }}!A:Z",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "valueInputOption",
+              "value": "RAW"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "range",
+              "value": "={{ $('Create spreadsheet').first().json.sheets[0].properties.title }}!A:Z"
+            },
+            {
+              "name": "values",
+              "value": "={{ $json.data }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "b3bbb0cf-fb2a-4ab8-bdc1-ec81bfca8b3a",
+      "name": "Create header Title-1",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        64,
+        -192
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "RroGs0ItAYq4Nln4",
+          "name": "Google Sheets account 6"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "52524fc5-b635-4742-8975-cfe667b22238",
+              "name": "rows",
+              "value": "Title,Competitor analysis",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        288,
+        -192
+      ],
+      "id": "37682eea-c07d-4707-8006-d41f161e97da",
+      "name": "Rows_2"
+    },
+    {
+      "parameters": {
+        "method": "PUT",
+        "url": "=https://sheets.googleapis.com/v4/spreadsheets/{{ $('Create spreadsheet').first().json.spreadsheetId }}/values/{{ $('Create spreadsheet').first().json.sheets[1].properties.title }}!A:Z",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "valueInputOption",
+              "value": "RAW"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "range",
+              "value": "={{ $('Create spreadsheet').first().json.sheets[1].properties.title }}!A:Z"
+            },
+            {
+              "name": "values",
+              "value": "={{ $json.data }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "6b95de84-18a9-48c9-9b26-e9bdfba15193",
+      "name": "Create_Header_title_2",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        736,
+        -192
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "RroGs0ItAYq4Nln4",
+          "name": "Google Sheets account 6"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.firecrawl.dev/v2/extract",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"urls\": [\"{{$json.ranking_url}}\"],\n  \"prompt\": \"Extract SEO fields for the given page. Use the keyword '{{$json.keyword}}' as the term to check. Return a JSON object with these fields only. title_tag from the HTML title. meta_description from the page meta description. heading_tag as the main H1 if present else the first H2. word_count as the count of visible words on the page. keyword_present as true if the keyword appears as a whole word. keyword_count as the number of whole word matches of the keyword.\",\n  \"schema\": {\n    \"type\": \"object\",\n    \"properties\": {\n      \"title_tag\": { \"type\": \"string\" },\n      \"meta_description\": { \"type\": \"string\" },\n      \"heading_tag\": { \"type\": \"string\" },\n      \"word_count\": { \"type\": \"integer\" },\n      \"keyword_present\": { \"type\": \"boolean\" },\n      \"keyword_count\": { \"type\": \"integer\" }\n    },\n    \"required\": [\"title_tag\",\"meta_description\",\"heading_tag\",\"word_count\",\"keyword_present\",\"keyword_count\"]\n  }\n}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2976,
+        -512
+      ],
+      "id": "16c4deb9-3a77-437d-8d36-39a2ab4d0d75",
+      "name": "HTTP Request",
+      "executeOnce": false,
+      "retryOnFail": true,
+      "waitBetweenTries": 5000,
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "AXkrl87jajAotejo",
+          "name": "Firecrawl"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "amount": 80
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        3200,
+        -512
+      ],
+      "id": "9515d86e-b937-4bbc-b62b-cff6a88e8e23",
+      "name": "Wait",
+      "webhookId": "1f31b1fa-eda9-4a13-92e3-3b040a0b56a1"
+    },
+    {
+      "parameters": {
+        "url": "=https://api.firecrawl.dev/v2/extract/{{ $json.id }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3424,
+        -512
+      ],
+      "id": "15261fc4-87ec-4cb9-b6c1-7aea12669b5b",
+      "name": "HTTP Request1",
+      "retryOnFail": true,
+      "waitBetweenTries": 5000,
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "AXkrl87jajAotejo",
+          "name": "Firecrawl"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "119df306-f16d-41c5-bf0e-6f63408e7813",
+              "name": "Keyword",
+              "value": "={{ $('Keyword_loop').item.json.keyword }}",
+              "type": "string"
+            },
+            {
+              "id": "2763ce75-af13-4b87-baea-dfec6a421cd7",
+              "name": "Position",
+              "value": "={{ $('Keyword_loop').item.json.position }}",
+              "type": "string"
+            },
+            {
+              "id": "7ff5a1c2-175b-4ebd-9833-89e2b8028a77",
+              "name": "Volume",
+              "value": "={{ $('Keyword_loop').item.json.volume }}",
+              "type": "string"
+            },
+            {
+              "id": "bdcffdbd-656d-405b-b4d6-3ebdda07571f",
+              "name": "KD%",
+              "value": "={{ Math.round(Number($('Keyword_loop').item.json.kd)) }}",
+              "type": "string"
+            },
+            {
+              "id": "482470c0-436d-424b-a73f-62adf51cad5a",
+              "name": "URL",
+              "value": "={{ $('Keyword_loop').item.json.ranking_url }}",
+              "type": "string"
+            },
+            {
+              "id": "90d5bc50-003f-4a4a-bf37-5f6814416e0e",
+              "name": "Title Tag",
+              "value": "={{ $json.data.title_tag }}",
+              "type": "string"
+            },
+            {
+              "id": "a19a7c36-1ce2-4493-9fbf-da91505fe9ef",
+              "name": "Meta Description",
+              "value": "={{ $json.data.meta_description }}",
+              "type": "string"
+            },
+            {
+              "id": "49203d56-beeb-4f03-9946-204197a145ea",
+              "name": "Heading Tag",
+              "value": "={{ $json.data.heading_tag }}",
+              "type": "string"
+            },
+            {
+              "id": "6e2668b3-f081-4636-8ebe-08ceef3d816f",
+              "name": "# of Words On Page",
+              "value": "={{ $json.data.word_count }}",
+              "type": "string"
+            },
+            {
+              "id": "f8771edd-3c37-4523-9c3e-5d1be2dabcd4",
+              "name": "Keyword Present On Page?",
+              "value": "={{ $json.data.keyword_present }}",
+              "type": "string"
+            },
+            {
+              "id": "de36e538-4147-48e9-aa71-e1514c201be1",
+              "name": "Number of Times On Page",
+              "value": "={{ $json.data.keyword_count }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        3648,
+        -512
+      ],
+      "id": "b1a551f1-68b7-4992-be71-47b8a8231d01",
+      "name": "Edit Fields2"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "={{ $('Create spreadsheet').first().json.spreadsheetId }}",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "={{ $('Create spreadsheet').first().json.sheets[0].properties.sheetId }}",
+          "mode": "id"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Keyword",
+              "displayName": "Keyword",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Position",
+              "displayName": "Position",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Volume",
+              "displayName": "Volume",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "KD%",
+              "displayName": "KD%",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "URL",
+              "displayName": "URL",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Title",
+              "displayName": "Title",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Tag",
+              "displayName": "Tag",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Meta Description",
+              "displayName": "Meta Description",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Heading Tag",
+              "displayName": "Heading Tag",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "# of Words On Page",
+              "displayName": "# of Words On Page",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Keyword Present On Page?",
+              "displayName": "Keyword Present On Page?",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Number of Times On Page\t",
+              "displayName": "Number of Times On Page\t",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Title Tag",
+              "displayName": "Title Tag",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Number of Times On Page",
+              "displayName": "Number of Times On Page",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        4096,
+        -512
+      ],
+      "id": "bdc660a2-d037-430d-9c50-8f2f5272d7a3",
+      "name": "Append row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "RroGs0ItAYq4Nln4",
+          "name": "Google Sheets account 6"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "amount": 10
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        3872,
+        -512
+      ],
+      "id": "39cff7b6-72b8-4e67-bdd6-b4650560ce49",
+      "name": "Wait1",
+      "webhookId": "564f1ee7-8781-4074-83e6-65d8a1aac3d2"
+    },
+    {
+      "parameters": {
+        "url": "=https://serpapi.com/search.json?engine=google&q={{ $('Keyword_loop').item.json.keyword }}&num=3&hl=en&gl=us\n",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpQueryAuth",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        4336,
+        -512
+      ],
+      "id": "34a3025a-0884-40fc-891b-b857c70273dd",
+      "name": "HTTP Request2",
+      "executeOnce": false,
+      "retryOnFail": true,
+      "waitBetweenTries": 5000,
+      "credentials": {
+        "httpQueryAuth": {
+          "id": "ocLWtpWebApHyaMu",
+          "name": "serapi"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "// n8n Code Node for extracting top 3 URLs from SerpAPI results\n\n// Get the input data from the previous node\nconst inputData = $input.all();\n\n// Initialize output array\nconst outputItems = [];\n\n// Process each input item\nfor (const item of inputData) {\n  // Get the JSON data - adjust the path based on your actual data structure\n  const serpApiData = item.json[0] || item.json;\n  \n  // Check if organic_results exists\n  if (serpApiData && serpApiData.organic_results) {\n    const organicResults = serpApiData.organic_results;\n    \n    // Get the keyword from search parameters\n    const keyword = serpApiData.search_parameters?.q || 'unknown_keyword';\n    \n    // Get up to the first 3 results\n    const topThree = organicResults.slice(0, 3);\n    \n    // Extract URL and position for each result\n    topThree.forEach((r) => {\n      outputItems.push({\n        json: {\n          keyword: keyword,\n          competitor_url: r.link ?? r.url ?? null,\n          competitor_title: r.title ?? null,\n          competitor_position: r.position ?? null\n        }\n      });\n    });\n  } else {\n    // If no organic_results found, return an error item\n    outputItems.push({\n      json: {\n        keyword: 'error',\n        competitor_url: null,\n        competitor_title: null,\n        competitor_position: null,\n        error: 'No organic_results found in the data'\n      }\n    });\n  }\n}\n\n// If no items were created, ensure at least one output\nif (outputItems.length === 0) {\n  outputItems.push({\n    json: {\n      keyword: 'error',\n      competitor_url: null,\n      competitor_title: null,\n      competitor_position: null,\n      error: 'No data processed'\n    }\n  });\n}\n\n// Return the processed items\nreturn outputItems;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2752,
+        -960
+      ],
+      "id": "c6b7b5b8-868e-4878-903d-a42d8662a73d",
+      "name": "Code2"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        2976,
+        -960
+      ],
+      "id": "b6dfd8e9-fa9a-4d7e-acc3-ad6174a304bf",
+      "name": "Loop Over Items2"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.firecrawl.dev/v2/extract",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"urls\": [\"{{ $json.competitor_url }}\"],\n  \"prompt\": \"Extract the title tag, meta description, H1 heading tag, count total words on the page, check if keyword '{{ $json.keyword }}' is present and count how many times it appears\",\n  \"schema\": {\n    \"type\": \"object\",\n    \"properties\": {\n      \"title_tag\": {\n        \"type\": \"string\",\n        \"description\": \"The title tag of the page\"\n      },\n      \"meta_description\": {\n        \"type\": \"string\",\n        \"description\": \"The meta description of the page\"\n      },\n      \"h1_tag\": {\n        \"type\": \"string\",\n        \"description\": \"The H1 heading tag on the page\"\n      },\n      \"word_count\": {\n        \"type\": \"integer\",\n        \"description\": \"Total number of words on the page\"\n      },\n      \"keyword_present\": {\n        \"type\": \"boolean\",\n        \"description\": \"Whether the keyword is present on the page\"\n      },\n      \"keyword_count\": {\n        \"type\": \"integer\",\n        \"description\": \"Number of times the keyword appears on the page\"\n      }\n    },\n    \"required\": [\n      \"title_tag\",\n      \"meta_description\",\n      \"h1_tag\",\n      \"word_count\",\n      \"keyword_present\",\n      \"keyword_count\"\n    ]\n  }\n}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3424,
+        -896
+      ],
+      "id": "40af07d0-c8d2-423d-8d12-0494ada5dae5",
+      "name": "HTTP Request3",
+      "executeOnce": false,
+      "retryOnFail": true,
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "AXkrl87jajAotejo",
+          "name": "Firecrawl"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "amount": 60
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        3648,
+        -896
+      ],
+      "id": "2df0b0ff-6c57-4a59-8cb4-c04d4beff6c5",
+      "name": "Wait2",
+      "webhookId": "bf5cda30-8f30-4510-8eb7-689a4a617be5"
+    },
+    {
+      "parameters": {
+        "url": "=https://api.firecrawl.dev/v2/extract/{{ $json.id }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3872,
+        -896
+      ],
+      "id": "aaac5613-290b-4b01-8c6c-9d53cf3686f4",
+      "name": "HTTP Request4",
+      "retryOnFail": true,
+      "waitBetweenTries": 5000,
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "AXkrl87jajAotejo",
+          "name": "Firecrawl"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "964a8790-7fed-4afd-be7b-3dfd18d8ebd8",
+              "name": "Keyword",
+              "value": "={{ $('Loop Over Items2').item.json.keyword }}",
+              "type": "string"
+            },
+            {
+              "id": "26ab3f9e-11ad-45d7-b164-a3b6e326f311",
+              "name": "Competitor URL",
+              "value": "={{ $('Loop Over Items2').item.json.competitor_url }}",
+              "type": "string"
+            },
+            {
+              "id": "fa34bef6-4fd5-4568-acef-02e25a55f64f",
+              "name": "Title Tag",
+              "value": "={{ $json.data.title_tag }}",
+              "type": "string"
+            },
+            {
+              "id": "013a73a4-3671-4341-ab33-120ed26983a2",
+              "name": "Meta Description",
+              "value": "={{ $json.data.meta_description }}",
+              "type": "string"
+            },
+            {
+              "id": "101a46e4-56ac-4526-9a3d-fc5f62ef6268",
+              "name": "Heading Tag",
+              "value": "={{ $json.data.h1_tag }}",
+              "type": "string"
+            },
+            {
+              "id": "3b7a1a66-8a01-45e8-8e2a-f7d9a0358b5b",
+              "name": "# of Words On Page",
+              "value": "={{ $json.data.word_count }}",
+              "type": "string"
+            },
+            {
+              "id": "ca155b81-5965-414f-bfd0-400eb2c3abcc",
+              "name": "Keyword Included On Page",
+              "value": "={{ $json.data.keyword_present }}",
+              "type": "string"
+            },
+            {
+              "id": "348aa17d-b7ab-4bdc-afcc-88b3d31c6862",
+              "name": "Number of Times KW Is Included",
+              "value": "={{ $json.data.keyword_count }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        4096,
+        -896
+      ],
+      "id": "83c03f70-40e6-4b97-a6c9-4512c4cf410a",
+      "name": "Edit Fields3"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        2528,
+        -720
+      ],
+      "id": "6db3f223-5757-404e-a368-8e9ee02219a1",
+      "name": "Keyword_loop"
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = items[0].json;\n\nreturn [\n  { json: { Title: \"Keyword\", \"Competitor analysis\": input[\"Keyword\"] } },\n  { json: { Title: \"Competitor URL\", \"Competitor analysis\": input[\"Competitor URL\"] } },\n  { json: { Title: \"Title Tag\", \"Competitor analysis\": input[\"Title Tag\"] } },\n  { json: { Title: \"Meta Description\", \"Competitor analysis\": input[\"Meta Description\"] } },\n  { json: { Title: \"Heading Tag\", \"Competitor analysis\": input[\"Heading Tag\"] } },\n  { json: { Title: \"# of Words On Page\", \"Competitor analysis\": input[\"# of Words On Page\"] } },\n  { json: { Title: \"Keyword Included On Page\", \"Competitor analysis\": input[\"Keyword Included On Page\"] === \"true\" ? \"Y\" : \"N\" } },\n  { json: { Title: \"Number of Times KW Is Included\", \"Competitor analysis\": input[\"Number of Times KW Is Included\"] } },\n  { json: { Title: \"\", \"Competitor analysis\": \"\" } } // Optional: blank row separator\n];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4320,
+        -896
+      ],
+      "id": "dc6e1ca4-6946-4c5e-932c-233448847a43",
+      "name": "Code3"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "={{ $('Create spreadsheet').first().json.spreadsheetId }}",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "={{ $('Create spreadsheet').first().json.sheets[1].properties.sheetId }}",
+          "mode": "id"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Title",
+              "displayName": "Title",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Competitor analysis",
+              "displayName": "Competitor analysis",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        4768,
+        -896
+      ],
+      "id": "e736c5c9-fc4c-44f7-ae1b-b536dc22410a",
+      "name": "Append row in sheet1",
+      "executeOnce": false,
+      "retryOnFail": true,
+      "waitBetweenTries": 5000,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "RroGs0ItAYq4Nln4",
+          "name": "Google Sheets account 6"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Here is the data:\nOur URL:{{ $('Code').first().json.url }}\n\nHere are the Competitor's details:\"{{ JSON.stringify($json.data) }}\"\n\n",
+        "hasOutputParser": true,
+        "messages": {
+          "messageValues": [
+            {
+              "message": "Prompt:\nYou are an SEO expert.\n\nI will send you structured competitor data in the form of an array of objects. Each object contains two fields:\n\n\"Title\" (such as \"Keyword\", \"Competitor URL\", \"Title Tag\", etc.)\n\n\"Competitor analysis\" (the actual data value)\n\nThe data is repeating in blocks, where each block belongs to a single competitor for a specific keyword. The same keyword may appear multiple times with different competitors.\n\nYour job is to:\n\nExtract all unique keywords from the \"Keyword\" entries.\n\nGroup all competitor data by keyword.\n\nFor each unique keyword, analyze its full competitor block(s) (usually 3 competitors per keyword).\n\nUse that analysis to generate 5 clear, practical SEO recommendations on how to improve ranking for our given page.\n\nReturn a separate JSON object per unique keyword using the exact format below.\n\nRequired Output Format (strictly):\n\n[\n  {\n    \"keyword\": \"keter shed\",\n    \"our_url\": \"https://example.com/our-keter-shed-page\",\n    \"recommendations\": [\n      \"Recommendation 1\",\n      \"Recommendation 2\",\n      \"Recommendation 3\",\n      \"Recommendation 4\",\n      \"Recommendation 5\"\n    ]\n  },\n  {\n    \"keyword\": \"resin storage\",\n    \"our_url\": \"https://example.com/our-resin-storage-page\",\n    \"recommendations\": [\n      \"Recommendation 1\",\n      \"Recommendation 2\",\n      \"Recommendation 3\",\n      \"Recommendation 4\",\n      \"Recommendation 5\"\n    ]\n  }\n]\n\n\nImportant Instructions:\n\nIf the same keyword appears more than once (e.g. \"keter shed\" repeated 5 times), only return one JSON block for that keyword.\n\nEach keyword's competitor data must be fully analyzed before writing recommendations.\n\nYour recommendations should focus on content quality, keyword usage, technical SEO, and user experience.\n\nDo not skip any unique keyword. Return one complete JSON object per keyword.\n\nKeep the field names and structure exactly as shown.\n\nIt is important to keep JSON structure consistent"
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.7,
+      "position": [
+        5216,
+        -896
+      ],
+      "id": "d19d8eac-2aff-4290-88d4-6b5998c588c9",
+      "name": "Gemini: Generate Strategy",
+      "executeOnce": true,
+      "retryOnFail": true,
+      "waitBetweenTries": 5000
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-2.0-flash-lite-001",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        5104,
+        -576
+      ],
+      "id": "d02541c3-1ff8-4bdf-b984-13f9a3e91624",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "EDJr9RDlJcoxIm7G",
+          "name": "Google Gemini(PaLM) API - Stryde Account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"keyword\": \"<keyword>\",\n  \"our_url\": \"<our ranking URL>\",\n  \"recommendations\": [\n    \"Recommendation 1\",\n    \"Recommendation 2\",\n    \"Recommendation 3\",\n    \"Recommendation 4\",\n    \"Recommendation 5\"\n  ]\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        5568,
+        -544
+      ],
+      "id": "61bccdb3-d943-4c61-bfad-ae9130f3f7df",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        4992,
+        -896
+      ],
+      "id": "92f054f8-b944-4cef-a57a-6d92daebbb53",
+      "name": "Aggregate"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "e2d83103-8744-4a86-b348-837b5bcfefa1",
+              "name": "keyword",
+              "value": "={{ $json.output.keyword }}",
+              "type": "string"
+            },
+            {
+              "id": "86cd4489-fd6a-4f59-ba22-3cc1024206f9",
+              "name": "ranking URL",
+              "value": "={{ $json.output.our_url }}",
+              "type": "string"
+            },
+            {
+              "id": "0b27e381-23a9-4746-8ecd-25ed7bb4765f",
+              "name": "recommendations",
+              "value": "={{ $json.output.recommendations.map((item, index) => `${index + 1}. ${item}`).join('\\n') }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        5568,
+        -896
+      ],
+      "id": "70d1fed3-fe0f-4565-acd0-c2f1674426bd",
+      "name": "Edit Fields4"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "={{ $('Create spreadsheet').first().json.spreadsheetId }}",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "={{ $('Create spreadsheet').first().json.sheets[2].properties.sheetId }}",
+          "mode": "id"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "keyword",
+              "displayName": "keyword",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "ranking URL",
+              "displayName": "ranking URL",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "recommendations",
+              "displayName": "recommendations",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        6016,
+        -896
+      ],
+      "id": "cbcb0541-fb37-481c-95d7-b114af877c20",
+      "name": "Append row in sheet2",
+      "executeOnce": false,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "RroGs0ItAYq4Nln4",
+          "name": "Google Sheets account 6"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "move",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $('Create spreadsheet').first().json.spreadsheetId }}",
+          "mode": "id"
+        },
+        "driveId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "My Drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "1SbJgd_mMaNu96yMJdj1Cq_NlktX0d1k-",
+          "mode": "id"
+        }
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        6240,
+        -896
+      ],
+      "id": "eec1054f-3a80-41db-b21d-46a560bd49d0",
+      "name": "Move file",
+      "executeOnce": true,
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "ReRgbm9kzC07s2Sv",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "amount": 15
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        4544,
+        -896
+      ],
+      "id": "ce2705b9-cf69-4fe5-be3a-c365447465bf",
+      "name": "Wait3",
+      "webhookId": "665c4b2e-8499-4fa1-bed6-934d46163d8a"
+    },
+    {
+      "parameters": {
+        "amount": 15
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        5792,
+        -896
+      ],
+      "id": "d6b260e6-640f-4dee-ac09-1701319aef9a",
+      "name": "Wait4",
+      "webhookId": "41569ad5-0fff-4e3d-aa89-67b231287a60"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('On form submission').first().json[\"Your Email (To Receive Notifications)\"] }}",
+        "subject": "YTop 20 Keywords In Striking Distance Report Is Ready",
+        "message": "=<p>\n  The Top 20 Keywords In Striking Distance workflow has finished running. All data has been processed and the results have been uploaded to the designated Google Sheet. \n  Please review the updated spreadsheet \n  <a href=\"{{ $('Create spreadsheet').first().json.spreadsheetUrl }}\" target=\"_blank\">here</a>.\n</p>\n",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        3200,
+        -1088
+      ],
+      "id": "15256a13-cd22-4494-9f7d-375db1d86e21",
+      "name": "Send a message",
+      "webhookId": "f7d57a36-a720-4a41-872c-2b42aab5e83b",
+      "executeOnce": true,
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "w9BcyMuS4x5Lccdg",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "amount": 30
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        2752,
+        -512
+      ],
+      "id": "3e19f5b1-14bf-4be0-804e-86aaa7223696",
+      "name": "Keyword",
+      "webhookId": "6ba5e158-a0ad-458c-958a-68b00c323869"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "a43385db-f547-4dd3-a615-4b0c4a2ea12b",
+              "name": "Client URL",
+              "value": "={{ $('On form submission').first().json[\"Client URL\"] }}",
+              "type": "string"
+            },
+            {
+              "id": "ea1a826b-177a-418c-b1c8-6025629983f8",
+              "name": "Keywords to be Excluded",
+              "value": "={{ $('On form submission').first().json[\"Keywords to be Excluded\"] }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        960,
+        -192
+      ],
+      "id": "9c3f702a-ebf1-4f26-93f9-23861d9cdfcb",
+      "name": "Edit Fields5"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "275a0097-4567-476c-86e0-8b6cff87d772",
+              "leftValue": "={{ $json.data }}",
+              "rightValue": "ERROR 50",
+              "operator": {
+                "type": "string",
+                "operation": "notContains"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1632,
+        -336
+      ],
+      "id": "442f91d2-e0e5-46df-b987-a9515b722b6f",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('On form submission').first().json[\"Your Email (To Receive Notifications)\"] }}",
+        "subject": "SEMrush Report – No Keyword Data Found for Submitted URL",
+        "message": "=<p>Hello,</p>\n\n<p>\n no keyword data was found for the URL (<strong>{{ $('Code').first().json.url }}</strong>) you submitted for analysis.\n</p>\n\n<p>\nSEMrush returned the following response: <strong>\"ERROR 50 :: NOTHING FOUND\"</strong><br>\nThis typically means the submitted URL is not currently ranking for any keywords within the selected search database or the excluded filter applied.\n</p>\n\n<p>\nIf you would like to analyze a different URL, please feel free to resubmit the form.\n</p>\n",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1984,
+        -112
+      ],
+      "id": "9754fa8d-1ed5-44ec-8fd6-0119694fbb32",
+      "name": "Send a message1",
+      "webhookId": "f7d57a36-a720-4a41-872c-2b42aab5e83b",
+      "executeOnce": false,
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "w9BcyMuS4x5Lccdg",
+          "name": "Gmail account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "amount": 15
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        3200,
+        -896
+      ],
+      "id": "bcbe9bb1-fba4-438c-bbd8-b629f913698d",
+      "name": "Wait5",
+      "webhookId": "2cfcb90d-7c0a-45cf-ba88-ce20d7d65166"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "aad14de6-6e1c-4aa6-a6b1-8e570ffb3ae0",
+              "name": "data",
+              "value": "={{ $json.data }}",
+              "type": "string"
+            },
+            {
+              "id": "70036f0b-a6ae-4fff-ac1b-7b328fce7fc3",
+              "name": "query_url",
+              "value": "={{ $('Code').first().json.url }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1856,
+        -528
+      ],
+      "id": "1bf1271a-30b2-4a0d-9297-bb3ff1216d31",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "d3894235-f0e9-4f2e-99f2-3dd53dc71f60",
+              "leftValue": "={{ $json.message }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notExists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        2304,
+        -528
+      ],
+      "id": "b49039c5-b0b6-40fb-8d0e-7f997deaa195",
+      "name": "If1"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('On form submission').first().json[\"Your Email (To Receive Notifications)\"] }}",
+        "subject": "=No Keywords Matched for {{ $('Edit Fields').first().json.query_url }}",
+        "message": "=<!DOCTYPE html>\n<html>\n  <body style=\"font-family: Arial, sans-serif; line-height: 1.5; color: #333;\">\n    <p>Hello,</p>\n    <p>\n      This is an automated notification to let you know that no keywords matched\n      for the query URL:\n    </p>\n    <p style=\"font-weight: bold; color: #d9534f;\">\n      {{ $('Edit Fields').first().json.query_url }}\n    </p>\n    <p>\n      SEMrush returned no results that meet the set conditions:\n      <br>- Exact host+path match required\n      <br>- Position between 5 and 15\n      <br>- Search volume ≥ 500\n    </p>\n    <p>\n      Please review the query URL and conditions, and try again with a different\n      input if needed.\n    \n\n",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        2384,
+        -176
+      ],
+      "id": "5c7824e5-e5f9-4888-81d3-564a23ae894d",
+      "name": "Send a message2",
+      "webhookId": "f7d57a36-a720-4a41-872c-2b42aab5e83b",
+      "executeOnce": false,
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "w9BcyMuS4x5Lccdg",
+          "name": "Gmail account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    }
+  ],
+  "pinData": {
+    "On form submission": [
+      {
+        "json": {
+          "Client URL": "vitafilters.com",
+          "Keywords to be Excluded": "vita filters, vita pool",
+          "Your Email (To Receive Notifications)": "gshuey@stryde.com",
+          "submittedAt": "2025-08-29T10:33:10.049-06:00",
+          "formMode": "production"
+        }
+      }
+    ]
+  },
+  "connections": {
+    "On form submission": {
+      "main": [
+        [
+          {
+            "node": "Create spreadsheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Semrush Keyword research",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create spreadsheet": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Semrush Keyword research": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code1": {
+      "main": [
+        [
+          {
+            "node": "If1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields1": {
+      "main": [
+        [
+          {
+            "node": "Create Headers",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Headers": {
+      "main": [
+        [
+          {
+            "node": "Create header Title-1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Headers1": {
+      "main": [
+        [
+          {
+            "node": "Create_Header_title_2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create header Title-1": {
+      "main": [
+        [
+          {
+            "node": "Rows_2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Rows_2": {
+      "main": [
+        [
+          {
+            "node": "Create Headers1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create_Header_title_2": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request1": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields2": {
+      "main": [
+        [
+          {
+            "node": "Wait1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait1": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append row in sheet": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request2": {
+      "main": [
+        [
+          {
+            "node": "Keyword_loop",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code2": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items2": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Wait5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request3": {
+      "main": [
+        [
+          {
+            "node": "Wait2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait2": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request4": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Keyword_loop": {
+      "main": [
+        [
+          {
+            "node": "Code2",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Keyword",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields3": {
+      "main": [
+        [
+          {
+            "node": "Code3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code3": {
+      "main": [
+        [
+          {
+            "node": "Wait3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append row in sheet1": {
+      "main": [
+        [
+          {
+            "node": "Aggregate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Gemini: Generate Strategy",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Gemini: Generate Strategy",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate": {
+      "main": [
+        [
+          {
+            "node": "Gemini: Generate Strategy",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gemini: Generate Strategy": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields4": {
+      "main": [
+        [
+          {
+            "node": "Wait4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append row in sheet2": {
+      "main": [
+        [
+          {
+            "node": "Move file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait3": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait4": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Move file": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Keyword": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields5": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send a message1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait5": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Code1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If1": {
+      "main": [
+        [
+          {
+            "node": "Keyword_loop",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send a message2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "df65094f-4563-4f32-9f03-df531c856556",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "f6c9eca423303bc1338431b2d767240311861a79c682ac7ab617cf9629046de0"
+  },
+  "id": "0Yoqrk1oALmtZXnM",
+  "tags": []
+}
