@@ -1,0 +1,1097 @@
+{
+  "name": "Invoice Automation",
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "authentication": "airtableTokenApi",
+        "baseId": {
+          "__rl": true,
+          "value": "app2L0MDmxtbrFskg",
+          "mode": "id"
+        },
+        "tableId": {
+          "__rl": true,
+          "value": "=tblGXuRkIuDI1cESV/viwNwufM1lz31IXok",
+          "mode": "id"
+        },
+        "triggerField": "Created",
+        "additionalFields": {}
+      },
+      "id": "989dcbdc-5d15-45df-bb0e-db6049c537e2",
+      "name": "Airtable Trigger",
+      "type": "n8n-nodes-base.airtableTrigger",
+      "position": [
+        496,
+        1352
+      ],
+      "typeVersion": 1,
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "hX3wPN3fUWW9Ctx9",
+          "name": "Airtable Personal Access Token account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.Status }}",
+              "value2": "Approved for Invoicing"
+            }
+          ]
+        }
+      },
+      "id": "45863a72-e832-448e-88e6-edb6ee1c8908",
+      "name": "IF - Status Check",
+      "type": "n8n-nodes-base.if",
+      "position": [
+        944,
+        1352
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "number": [
+            {
+              "value1": "={{ $json.Id ?? \"\" }}",
+              "operation": "isEmpty"
+            }
+          ]
+        }
+      },
+      "id": "43c615f1-777f-43da-8274-2b9ecce18aa0",
+      "name": "IF - Customer Exists?",
+      "type": "n8n-nodes-base.if",
+      "position": [
+        1392,
+        1256
+      ],
+      "typeVersion": 1,
+      "alwaysOutputData": false
+    },
+    {
+      "parameters": {},
+      "id": "2cb49f5e-08f7-46ea-afab-217e98908a14",
+      "mode": "append",
+      "name": "Merge QBO Customer",
+      "type": "n8n-nodes-base.merge",
+      "position": [
+        1840,
+        1256
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "resource": "customer",
+        "customerId": "={{ $('Search records').item.json['Stripe Customer ID'] || \"\"}}"
+      },
+      "id": "60920472-77b6-4243-89b0-f162f6e900d9",
+      "name": "Stripe - Find Customer",
+      "type": "n8n-nodes-base.stripe",
+      "position": [
+        2288,
+        1184
+      ],
+      "typeVersion": 1,
+      "credentials": {
+        "stripeApi": {
+          "id": "LWzc411GdqHQhrsM",
+          "name": "Stripe account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.DisplayName }}",
+              "operation": "isNotEmpty"
+            }
+          ]
+        }
+      },
+      "id": "bd0adf89-499a-40ee-9e37-648ae0aad30d",
+      "name": "IF - Stripe Customer Exists?",
+      "type": "n8n-nodes-base.if",
+      "position": [
+        2736,
+        1256
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "resource": "customer",
+        "operation": "create",
+        "name": "={{ $json.DisplayName }}",
+        "additionalFields": {
+          "email": "={{ $json.PrimaryEmailAddr.Address }}"
+        }
+      },
+      "id": "ea27b7d1-4e6e-4620-b402-b0b8e0db436d",
+      "name": "Stripe - Create Customer",
+      "type": "n8n-nodes-base.stripe",
+      "position": [
+        2960,
+        1184
+      ],
+      "typeVersion": 1,
+      "credentials": {
+        "stripeApi": {
+          "id": "LWzc411GdqHQhrsM",
+          "name": "Stripe account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "id": "901e1828-f5e5-4801-83a0-53fce11f4ea0",
+      "mode": "append",
+      "name": "Merge Stripe Customer",
+      "type": "n8n-nodes-base.merge",
+      "position": [
+        3184,
+        1256
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "limit": 500,
+        "filters": {
+          "query": "=WHERE DisplayName = '{{ $json['Client Name'] }}'\n\n"
+        }
+      },
+      "id": "4c99441c-1f72-49d6-b421-62e3c2c72b28",
+      "name": "QuickBooks - Find Customer",
+      "type": "n8n-nodes-base.quickbooks",
+      "position": [
+        1168,
+        1256
+      ],
+      "typeVersion": 1,
+      "alwaysOutputData": false,
+      "credentials": {
+        "quickBooksOAuth2Api": {
+          "id": "FHFuinMibSkufyxh",
+          "name": "QuickBooks Online account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "invoice",
+        "operation": "create",
+        "CustomerRef": "={{ $('Update Quickbooks and Stripe Customer Ids').item.json.fields['QuickBooks Customer ID'] }}",
+        "Line": [
+          {
+            "Qty": "={{ $('Update Quickbooks and Stripe Customer Ids').item.json.fields.Quantity }}",
+            "Amount": "={{ $json.Amount }}",
+            "itemId": "={{ $json.Id }}",
+            "DetailType": "SalesItemLineDetail",
+            "Description": "={{ $json.Description }}"
+          }
+        ],
+        "additionalFields": {}
+      },
+      "id": "497c8d82-1916-4ac6-acd2-7fdc561d3919",
+      "name": "Create an invoice",
+      "type": "n8n-nodes-base.quickbooks",
+      "position": [
+        4528,
+        1256
+      ],
+      "typeVersion": 1,
+      "credentials": {
+        "quickBooksOAuth2Api": {
+          "id": "FHFuinMibSkufyxh",
+          "name": "QuickBooks Online account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "create",
+        "displayName": "={{ $('IF - Status Check').item.json['Client Name'] }}",
+        "additionalFields": {
+          "PrimaryEmailAddr": "={{ $('IF - Status Check').item.json['Client Email'] }}"
+        }
+      },
+      "id": "b1330d78-6e36-4296-98b0-0312804e955d",
+      "name": "Create a customer",
+      "type": "n8n-nodes-base.quickbooks",
+      "position": [
+        1616,
+        1184
+      ],
+      "typeVersion": 1,
+      "credentials": {
+        "quickBooksOAuth2Api": {
+          "id": "FHFuinMibSkufyxh",
+          "name": "QuickBooks Online account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "search",
+        "base": {
+          "__rl": true,
+          "mode": "list",
+          "value": "{YOUR_AIRTABLE_BASE_ID}",
+          "cachedResultUrl": "https://airtable.com/{YOUR_AIRTABLE_BASE_ID}",
+          "cachedResultName": "{YOUR_AIRTABLE_BASE_NAME}"
+        },
+        "table": {
+          "__rl": true,
+          "mode": "list",
+          "value": "{YOUR_AIRTABLE_TABLE_ID}",
+          "cachedResultUrl": "https://airtable.com/{YOUR_AIRTABLE_BASE_ID}/{YOUR_AIRTABLE_TABLE_ID}",
+          "cachedResultName": "{YOUR_AIRTABLE_TABLE_NAME}"
+        },
+        "options": {}
+      },
+      "id": "8b371200-572e-4995-b7d7-d496751342f4",
+      "name": "Search records",
+      "type": "n8n-nodes-base.airtable",
+      "position": [
+        720,
+        1352
+      ],
+      "typeVersion": 2.1,
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "hX3wPN3fUWW9Ctx9",
+          "name": "Airtable Personal Access Token account 2"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "id": "12d6c762-e245-4203-b91d-a03ad0c39c5a",
+      "name": "Exit from workflow",
+      "type": "n8n-nodes-base.noOp",
+      "position": [
+        1168,
+        1448
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "version": 2,
+            "leftValue": "",
+            "caseSensitive": true,
+            "typeValidation": "strict"
+          },
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "0e0b7c72-589a-4d76-9201-cbc4cfdc9c70",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              },
+              "leftValue": "={{ $('Search records').item.json['Stripe Customer ID'] }}",
+              "rightValue": ""
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "43640cbe-d8c0-4d46-a8be-71ed26deaf88",
+      "name": "If - Stripe Customer Id",
+      "type": "n8n-nodes-base.if",
+      "position": [
+        2064,
+        1256
+      ],
+      "typeVersion": 2.2
+    },
+    {
+      "parameters": {},
+      "id": "0af13885-0000-48a4-9a1a-5ca0695d4329",
+      "name": "Merge - Stripe Customers",
+      "type": "n8n-nodes-base.merge",
+      "position": [
+        2512,
+        1256
+      ],
+      "typeVersion": 3.2
+    },
+    {
+      "parameters": {
+        "operation": "search",
+        "base": {
+          "__rl": true,
+          "mode": "list",
+          "value": "{YOUR_AIRTABLE_BASE_ID}",
+          "cachedResultUrl": "https://airtable.com/{YOUR_AIRTABLE_BASE_ID}",
+          "cachedResultName": "{YOUR_AIRTABLE_BASE_NAME}"
+        },
+        "table": {
+          "__rl": true,
+          "mode": "list",
+          "value": "{YOUR_AIRTABLE_TABLE_ID}",
+          "cachedResultUrl": "https://airtable.com/{YOUR_AIRTABLE_BASE_ID}/{YOUR_AIRTABLE_TABLE_ID}",
+          "cachedResultName": "{YOUR_AIRTABLE_TABLE_NAME}"
+        },
+        "filterByFormula": "={Client Email} = \"{{ $json.email }}\"",
+        "options": {}
+      },
+      "id": "d72208de-119a-4cc7-8f41-c04e8534fdf5",
+      "name": "Search records by email",
+      "type": "n8n-nodes-base.airtable",
+      "position": [
+        3408,
+        1256
+      ],
+      "typeVersion": 2.1,
+      "alwaysOutputData": true,
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "hX3wPN3fUWW9Ctx9",
+          "name": "Airtable Personal Access Token account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "base": {
+          "__rl": true,
+          "mode": "list",
+          "value": "{YOUR_AIRTABLE_BASE_ID}",
+          "cachedResultUrl": "https://airtable.com/{YOUR_AIRTABLE_BASE_ID}",
+          "cachedResultName": "{YOUR_AIRTABLE_BASE_NAME}"
+        },
+        "table": {
+          "__rl": true,
+          "mode": "list",
+          "value": "{YOUR_AIRTABLE_TABLE_ID}",
+          "cachedResultUrl": "https://airtable.com/{YOUR_AIRTABLE_BASE_ID}/{YOUR_AIRTABLE_TABLE_ID}",
+          "cachedResultName": "{YOUR_AIRTABLE_TABLE_NAME}"
+        },
+        "columns": {
+          "value": {
+            "id": "={{ $json.id }}",
+            "Stripe Customer ID": "={{ $('Merge Stripe Customer').item.json.id }}",
+            "QuickBooks Customer ID": "={{ $('Merge QBO Customer').item.json.Id }}"
+          },
+          "schema": [
+            {
+              "id": "id",
+              "type": "string",
+              "display": true,
+              "removed": false,
+              "readOnly": true,
+              "required": false,
+              "displayName": "id",
+              "defaultMatch": true
+            },
+            {
+              "id": "Deal Name",
+              "type": "string",
+              "display": true,
+              "removed": true,
+              "readOnly": false,
+              "required": false,
+              "displayName": "Deal Name",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Client Name",
+              "type": "string",
+              "display": true,
+              "removed": true,
+              "readOnly": false,
+              "required": false,
+              "displayName": "Client Name",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Client Email",
+              "type": "string",
+              "display": true,
+              "removed": true,
+              "readOnly": false,
+              "required": false,
+              "displayName": "Client Email",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Status",
+              "type": "options",
+              "display": true,
+              "options": [
+                {
+                  "name": "Approved for Invoicing",
+                  "value": "Approved for Invoicing"
+                },
+                {
+                  "name": "Draft",
+                  "value": "Draft"
+                },
+                {
+                  "name": "Invoiced",
+                  "value": "Invoiced"
+                }
+              ],
+              "removed": true,
+              "readOnly": false,
+              "required": false,
+              "displayName": "Status",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Line Items JSON",
+              "type": "string",
+              "display": true,
+              "removed": true,
+              "readOnly": false,
+              "required": false,
+              "displayName": "Line Items JSON",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "QuickBooks Customer ID",
+              "type": "string",
+              "display": true,
+              "removed": false,
+              "readOnly": false,
+              "required": false,
+              "displayName": "QuickBooks Customer ID",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Stripe Customer ID",
+              "type": "string",
+              "display": true,
+              "removed": false,
+              "readOnly": false,
+              "required": false,
+              "displayName": "Stripe Customer ID",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Stripe Payment Link",
+              "type": "string",
+              "display": true,
+              "removed": true,
+              "readOnly": false,
+              "required": false,
+              "displayName": "Stripe Payment Link",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "QuickBooks Invoice #",
+              "type": "string",
+              "display": true,
+              "removed": true,
+              "readOnly": false,
+              "required": false,
+              "displayName": "QuickBooks Invoice #",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            }
+          ],
+          "mappingMode": "defineBelow",
+          "matchingColumns": [
+            "id"
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "62d46511-8cf8-4160-a242-bea2e4e81086",
+      "name": "Update Quickbooks and Stripe Customer Ids",
+      "type": "n8n-nodes-base.airtable",
+      "position": [
+        3632,
+        1256
+      ],
+      "typeVersion": 2.1,
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "hX3wPN3fUWW9Ctx9",
+          "name": "Airtable Personal Access Token account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.stripe.com/v1/payment_links",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "stripeApi",
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "line_items[0][price]",
+              "value": "={{ $json.fields['Stripe Price Id'] }}"
+            },
+            {
+              "name": "line_items[0][quantity]",
+              "value": "={{ $json.fields.Quantity }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "cdd5c85d-1168-4b4e-ab95-b17132f0bd10",
+      "name": "Generate Payment Links",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        3856,
+        1256
+      ],
+      "typeVersion": 4.2,
+      "credentials": {
+        "stripeApi": {
+          "id": "LWzc411GdqHQhrsM",
+          "name": "Stripe account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "https://quickbooks.api.intuit.com/v3/company/2L0MDmxtbrFskg/query?query=SELECT%20*%20FROM%20Item",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "quickBooksOAuth2Api",
+        "options": {}
+      },
+      "id": "cce1f3fd-3731-41ea-8b6c-b1b6872f571c",
+      "name": "Get all Quickbook products",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        4080,
+        1256
+      ],
+      "typeVersion": 4.2,
+      "credentials": {
+        "quickBooksOAuth2Api": {
+          "id": "FHFuinMibSkufyxh",
+          "name": "QuickBooks Online account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const airtableProductName = $('Update Quickbooks and Stripe Customer Ids').item.json.fields['Quickbooks Product Name'];\nconst quantity = $('Update Quickbooks and Stripe Customer Ids').item.json.fields.Quantity;\n\nconst quickBooksProducts = $json.QueryResponse.Item;\n\nconst matchingProduct = quickBooksProducts.find(product => product.Name === airtableProductName);\n\nif (matchingProduct) {\n  const unitPrice = matchingProduct.UnitPrice || 0;\n  const amount = unitPrice * (quantity || 0);\n\n  return {\n    json: {\n      Id: matchingProduct.Id,\n      Description: matchingProduct.Description,\n      Amount: amount,\n    }\n  };\n} else {\n  return {\n    json: {\n      Id: null,\n      Description: null,\n      Amount: 0,\n    }\n  };\n}\n"
+      },
+      "id": "b6e2c9d4-502b-44e6-b907-8eab05c7561e",
+      "name": "Filter and Return product details",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        4304,
+        1256
+      ],
+      "typeVersion": 2
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "base": {
+          "__rl": true,
+          "mode": "list",
+          "value": "{YOUR_AIRTABLE_BASE_ID}",
+          "cachedResultUrl": "https://airtable.com/{YOUR_AIRTABLE_BASE_ID}",
+          "cachedResultName": "{YOUR_AIRTABLE_BASE_NAME}"
+        },
+        "table": {
+          "__rl": true,
+          "mode": "list",
+          "value": "{YOUR_AIRTABLE_TABLE_ID}",
+          "cachedResultUrl": "https://airtable.com/{YOUR_AIRTABLE_BASE_ID}/{YOUR_AIRTABLE_TABLE_ID}",
+          "cachedResultName": "{YOUR_AIRTABLE_TABLE_NAME}"
+        },
+        "columns": {
+          "value": {
+            "id": "={{ $('Update Quickbooks and Stripe Customer Ids').item.json.id }}",
+            "Status": "Invoiced",
+            "Stripe Payment Link": "={{ $('Generate Payment Links').item.json.url }}",
+            "QuickBooks Invoice #": "=INV-{{ $json.DocNumber }}"
+          },
+          "schema": [
+            {
+              "id": "id",
+              "type": "string",
+              "display": true,
+              "removed": false,
+              "readOnly": true,
+              "required": false,
+              "displayName": "id",
+              "defaultMatch": true
+            },
+            {
+              "id": "Deal Name",
+              "type": "string",
+              "display": true,
+              "removed": true,
+              "readOnly": false,
+              "required": false,
+              "displayName": "Deal Name",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Client Name",
+              "type": "string",
+              "display": true,
+              "removed": true,
+              "readOnly": false,
+              "required": false,
+              "displayName": "Client Name",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Client Email",
+              "type": "string",
+              "display": true,
+              "removed": true,
+              "readOnly": false,
+              "required": false,
+              "displayName": "Client Email",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Status",
+              "type": "options",
+              "display": true,
+              "options": [
+                {
+                  "name": "Approved for Invoicing",
+                  "value": "Approved for Invoicing"
+                },
+                {
+                  "name": "Draft",
+                  "value": "Draft"
+                },
+                {
+                  "name": "Invoiced",
+                  "value": "Invoiced"
+                }
+              ],
+              "removed": false,
+              "readOnly": false,
+              "required": false,
+              "displayName": "Status",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Line Items JSON",
+              "type": "string",
+              "display": true,
+              "removed": true,
+              "readOnly": false,
+              "required": false,
+              "displayName": "Line Items JSON",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "QuickBooks Customer ID",
+              "type": "string",
+              "display": true,
+              "removed": true,
+              "readOnly": false,
+              "required": false,
+              "displayName": "QuickBooks Customer ID",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Stripe Customer ID",
+              "type": "string",
+              "display": true,
+              "removed": true,
+              "readOnly": false,
+              "required": false,
+              "displayName": "Stripe Customer ID",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Stripe Payment Link",
+              "type": "string",
+              "display": true,
+              "removed": false,
+              "readOnly": false,
+              "required": false,
+              "displayName": "Stripe Payment Link",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "QuickBooks Invoice #",
+              "type": "string",
+              "display": true,
+              "removed": false,
+              "readOnly": false,
+              "required": false,
+              "displayName": "QuickBooks Invoice #",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Stripe Price Id",
+              "type": "string",
+              "display": true,
+              "removed": true,
+              "readOnly": false,
+              "required": false,
+              "displayName": "Stripe Price Id",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Quantity",
+              "type": "number",
+              "display": true,
+              "removed": true,
+              "readOnly": false,
+              "required": false,
+              "displayName": "Quantity",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Quickbooks Product Name",
+              "type": "string",
+              "display": true,
+              "removed": true,
+              "readOnly": false,
+              "required": false,
+              "displayName": "Quickbooks Product Name",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            }
+          ],
+          "mappingMode": "defineBelow",
+          "matchingColumns": [
+            "id"
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "52c262a3-df12-47a4-bc8a-73eaaea82ec8",
+      "name": "Update Stripe Payment Link and Quickbooks Invoice #",
+      "type": "n8n-nodes-base.airtable",
+      "position": [
+        4752,
+        1256
+      ],
+      "typeVersion": 2.1,
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "hX3wPN3fUWW9Ctx9",
+          "name": "Airtable Personal Access Token account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "\n\n#### AIRTABLE\n- Create and connect your Airtable account using a **Personal Access Token**.\n- Create a table with the following columns:\n  - **Deal Name** - Short representation of each record.\n  - **Client Name** - Name of the client/customer.\n  - **Client Email** - Email of the client/customer.\n  - **Status** - Status of the deal (Draft, Approved for Invoicing, Invoiced).\n  - **QuickBooks Customer ID** - ID of the client in QuickBooks.\n  - **Stripe Customer ID** - ID of the client in Stripe.\n  - **Stripe Payment Link** - Payment link from Stripe.\n  - **QuickBooks Invoice #** - Invoice number from QuickBooks.\n  - **Stripe Price Id** - Price ID of the product selected by the client in Stripe.\n  - **Quantity** - Quantity of the product selected by the client.\n  - **QuickBooks Product Name** - Name of the product from QuickBooks.\n  - **Created** - Created timestamp.\n\n- Select the base and table in the **Airtable Trigger** node.\n- Connect and select the same base and table in all required Airtable nodes.\n\n#### QUICKBOOKS\n- Create and connect credentials using **OAuth2 authorization** in QuickBooks.\n- Use the same credentials across all QuickBooks nodes.\n- Add your company ID in the URL in the **Get all Quickbook products** node\n\n#### STRIPE\n- Generate and connect your Stripe account using the **Secret Key**.\n- Use these credentials in all required Stripe nodes.\n",
+        "height": 680,
+        "width": 620,
+        "color": 5
+      },
+      "id": "75b2998f-2369-425a-b88b-f8e7383861f1",
+      "name": "Sticky Note22",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        544,
+        672
+      ],
+      "typeVersion": 1
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Search records": {
+      "main": [
+        [
+          {
+            "node": "IF - Status Check",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Airtable Trigger": {
+      "main": [
+        [
+          {
+            "node": "Search records",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create a customer": {
+      "main": [
+        [
+          {
+            "node": "Merge QBO Customer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create an invoice": {
+      "main": [
+        [
+          {
+            "node": "Update Stripe Payment Link and Quickbooks Invoice #",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF - Status Check": {
+      "main": [
+        [
+          {
+            "node": "QuickBooks - Find Customer",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Exit from workflow",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge QBO Customer": {
+      "main": [
+        [
+          {
+            "node": "If - Stripe Customer Id",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF - Customer Exists?": {
+      "main": [
+        [
+          {
+            "node": "Create a customer",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Merge QBO Customer",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge Stripe Customer": {
+      "main": [
+        [
+          {
+            "node": "Search records by email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Payment Links": {
+      "main": [
+        [
+          {
+            "node": "Get all Quickbook products",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Stripe - Find Customer": {
+      "main": [
+        [
+          {
+            "node": "Merge - Stripe Customers",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "If - Stripe Customer Id": {
+      "main": [
+        [
+          {
+            "node": "Stripe - Find Customer",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Merge - Stripe Customers",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search records by email": {
+      "main": [
+        [
+          {
+            "node": "Update Quickbooks and Stripe Customer Ids",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge - Stripe Customers": {
+      "main": [
+        [
+          {
+            "node": "IF - Stripe Customer Exists?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Stripe - Create Customer": {
+      "main": [
+        [
+          {
+            "node": "Merge Stripe Customer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get all Quickbook products": {
+      "main": [
+        [
+          {
+            "node": "Filter and Return product details",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "QuickBooks - Find Customer": {
+      "main": [
+        [
+          {
+            "node": "IF - Customer Exists?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF - Stripe Customer Exists?": {
+      "main": [
+        [
+          {
+            "node": "Stripe - Create Customer",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Merge Stripe Customer",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Filter and Return product details": {
+      "main": [
+        [
+          {
+            "node": "Create an invoice",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Quickbooks and Stripe Customer Ids": {
+      "main": [
+        [
+          {
+            "node": "Generate Payment Links",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Stripe Payment Link and Quickbooks Invoice #": {
+      "main": [
+        []
+      ]
+    }
+  },
+  "active": false,
+  "settings": {},
+  "versionId": "df109a80-174d-4f21-9c08-e12c087c5b20",
+  "meta": {
+    "templateId": "7291",
+    "instanceId": "a1ae5c8dc6c65e674f9c3947d083abcc749ef2546dff9f4ff01de4d6a36ebfe6"
+  },
+  "id": "NLkwOWELRFQJAwmF",
+  "tags": []
+}
