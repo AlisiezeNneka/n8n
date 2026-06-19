@@ -1,0 +1,514 @@
+{
+  "name": "B - Crypto Market Pulse (AI Analyst)",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "75379dfa-1dc3-4448-91f5-4f37a2299df1",
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -1776,
+        288
+      ]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 6
+            }
+          ]
+        }
+      },
+      "id": "f4d3a4e1-4166-4a77-b805-13dbce9f7a54",
+      "name": "Schedule - Every 6h",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -1776,
+        480
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "37f2358e-e1d3-4acd-babf-04203bec3537",
+              "name": "coin_ids",
+              "value": "bitcoin,ethereum,solana,cardano,dogecoin",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "dcc6442a-5185-4f0e-9666-2b0ce24c088e",
+      "name": "Set - Watchlist",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -1552,
+        384
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://api.coingecko.com/api/v3/coins/markets",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "vs_currency",
+              "value": "usd"
+            },
+            {
+              "name": "ids",
+              "value": "={{ $json.coin_ids }}"
+            },
+            {
+              "name": "order",
+              "value": "market_cap_desc"
+            },
+            {
+              "name": "price_change_percentage",
+              "value": "1h,24h,7d"
+            },
+            {
+              "name": "sparkline",
+              "value": "false"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "eb73f872-5b7b-47f9-8ce7-edbd32ff16e4",
+      "name": "HTTP - Market Data",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -1248,
+        256
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://api.coingecko.com/api/v3/search/trending",
+        "options": {}
+      },
+      "id": "8e011be0-3d5f-4b3e-9d37-3dd8c7404566",
+      "name": "HTTP - Trending",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -1328,
+        480
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Trending arrives as a single object with coins[]\nconst coins = ($json.coins || []).map(c => c.item ? c.item.name : c.name);\nreturn [{ json: { trending: coins.slice(0, 7) } }];"
+      },
+      "id": "f7e4bad6-cc96-4cfe-9f98-39b9e7eb1730",
+      "name": "Code - Extract Trending",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1104,
+        480
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "options": {}
+      },
+      "id": "e7fddb65-b157-4a13-afe2-6bce03e9fc82",
+      "name": "Merge - Data + Trending",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.1,
+      "position": [
+        -880,
+        384
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Market data comes in as multiple items (one per coin) on input 0.\n// Trending comes from the Code node on input 1, but after merge-by-position\n// only the first item carries it, so pull it from the source node directly.\nconst trending = $('Code - Extract Trending').first().json.trending || [];\n\nconst coins = $input.all().map(i => i.json).filter(c => c.id);\n\nlet lines = coins.map(c => {\n  const p = c.current_price;\n  const h1 = (c.price_change_percentage_1h_in_currency ?? 0).toFixed(2);\n  const h24 = (c.price_change_percentage_24h_in_currency ?? c.price_change_percentage_24h ?? 0).toFixed(2);\n  const d7 = (c.price_change_percentage_7d_in_currency ?? 0).toFixed(2);\n  return `${c.name} (${c.symbol.toUpperCase()}): $${p} | 1h ${h1}% | 24h ${h24}% | 7d ${d7}% | mcap $${(c.market_cap/1e9).toFixed(1)}B`;\n});\n\nreturn [{ json: {\n  generated_at: new Date().toISOString(),\n  coin_count: coins.length,\n  snapshot: lines.join('\\n'),\n  trending: trending.join(', '),\n  raw_coins: coins.map(c => ({ name: c.name, symbol: c.symbol, h24: c.price_change_percentage_24h }))\n}}];"
+      },
+      "id": "fad2f738-e970-4147-bcd1-db6e62774d1d",
+      "name": "Code - Build Snapshot",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -656,
+        384
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Here is the current crypto market snapshot:\n\n{{ $json.snapshot }}\n\nTrending across the market right now: {{ $json.trending }}\n\nProduce a short market brief. For EACH coin give a signal (bullish / neutral / bearish) and a one-line reason grounded in its price moves. Then give an overall market mood and one risk to watch.",
+        "hasOutputParser": true,
+        "messages": {
+          "messageValues": [
+            {
+              "message": "You are a measured crypto market analyst. You never give financial advice or price predictions. You describe momentum and sentiment based strictly on the percentage moves provided. Be concise and neutral in tone."
+            }
+          ]
+        }
+      },
+      "id": "d4735de4-2d39-4463-9adc-1d17c8f3c719",
+      "name": "AI - Market Brief",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.5,
+      "position": [
+        -432,
+        384
+      ]
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "llama-3.3-70b-versatile",
+          "mode": "list",
+          "cachedResultName": "llama-3.3-70b-versatile"
+        },
+        "options": {
+          "temperature": 0.3
+        }
+      },
+      "id": "d5a5fb06-c1ea-400c-aa5b-e6470be6443a",
+      "name": "Groq Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        -560,
+        640
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "XyvZvlTQgJzqL3H5",
+          "name": "groq"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\"overall_mood\": \"cautiously bullish\", \"risk_to_watch\": \"High 7-day gains may invite profit-taking\", \"signals\": [{\"coin\": \"Bitcoin\", \"signal\": \"bullish\", \"reason\": \"Steady 24h gain with strong market cap\"}, {\"coin\": \"Ethereum\", \"signal\": \"neutral\", \"reason\": \"Flat across all timeframes\"}]}"
+      },
+      "id": "8af4b1e7-45b1-486d-8493-d0112b88f729",
+      "name": "Structured Output Parser",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.2,
+      "position": [
+        -176,
+        656
+      ]
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "output.signals",
+        "options": {
+          "destinationFieldName": "signal_data"
+        }
+      },
+      "id": "3b51f68a-8006-4952-b611-696708997522",
+      "name": "Split Out - Per Coin",
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        -80,
+        384
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "7eb7526a-5d67-46e0-9980-21868ace973d",
+              "leftValue": "={{ $json.signal_data.signal }}",
+              "rightValue": "neutral",
+              "operator": {
+                "type": "string",
+                "operation": "notEquals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "0729ed9c-1fa9-41ae-a894-089b8c710694",
+      "name": "Filter - Actionable Only",
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.2,
+      "position": [
+        144,
+        384
+      ]
+    },
+    {
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "options": {}
+      },
+      "id": "21acd34a-96b4-4f10-b493-387e6c69bb02",
+      "name": "Aggregate - Actionable",
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        368,
+        384
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const actionable = $json.data || [];\nconst brief = $('AI - Market Brief').first().json.output;\nconst snap = $('Code - Build Snapshot').first().json;\n\nlet report = `CRYPTO MARKET PULSE\\n${snap.generated_at}\\n\\n`;\nreport += `Overall mood: ${brief.overall_mood}\\n`;\nreport += `Risk to watch: ${brief.risk_to_watch}\\n\\n`;\nreport += `Trending: ${snap.trending}\\n\\n`;\nreport += `ACTIONABLE SIGNALS (${actionable.length}):\\n`;\nactionable.forEach(a => {\n  const s = a.signal_data;\n  report += `  - ${s.coin}: ${s.signal.toUpperCase()} — ${s.reason}\\n`;\n});\n\nreturn [{ json: {\n  report,\n  overall_mood: brief.overall_mood,\n  actionable_count: actionable.length,\n  full_brief: brief\n}}];"
+      },
+      "id": "313a2c9f-3df1-45e0-b512-1b212a9d6031",
+      "name": "Code - Final Digest",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        592,
+        384
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## Crypto Market Pulse\nAI market analyst on a schedule.\n\n**Free stack:**\n- CoinGecko keyless API (no key)\n- Groq Llama 3.3 70B (free)\n\nRuns every 6h, or click Manual Trigger to test.",
+        "height": 180,
+        "width": 300,
+        "color": 6
+      },
+      "id": "6d15642a-b78c-4835-af0d-f7a6f4362613",
+      "name": "Sticky Note 913b9",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -1808,
+        32
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### Parallel fetch + Merge\nTwo HTTP calls run at the same time: detailed market data AND trending coins. Merge (combine by position) joins them into one stream before the AI sees them.",
+        "height": 168,
+        "width": 300,
+        "color": 5
+      },
+      "id": "30bd9134-c1c7-4b5f-9c17-9dc0ad68c890",
+      "name": "Sticky Note 83200",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -1296,
+        32
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### The data-shape journey\nMany coins -> AI returns signals[] -> **Split Out** to one-per-coin -> **Filter** drops neutral -> **Aggregate** back to one list. This is the transform pattern they asked about.",
+        "height": 168,
+        "width": 360,
+        "color": 7
+      },
+      "id": "d563852e-11d9-463d-ac12-f000103f5bb7",
+      "name": "Sticky Note b3d54",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -128,
+        0
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Manual Trigger": {
+      "main": [
+        [
+          {
+            "node": "Set - Watchlist",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule - Every 6h": {
+      "main": [
+        [
+          {
+            "node": "Set - Watchlist",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set - Watchlist": {
+      "main": [
+        [
+          {
+            "node": "HTTP - Market Data",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "HTTP - Trending",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP - Market Data": {
+      "main": [
+        [
+          {
+            "node": "Merge - Data + Trending",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP - Trending": {
+      "main": [
+        [
+          {
+            "node": "Code - Extract Trending",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code - Extract Trending": {
+      "main": [
+        [
+          {
+            "node": "Merge - Data + Trending",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge - Data + Trending": {
+      "main": [
+        [
+          {
+            "node": "Code - Build Snapshot",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code - Build Snapshot": {
+      "main": [
+        [
+          {
+            "node": "AI - Market Brief",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI - Market Brief": {
+      "main": [
+        [
+          {
+            "node": "Split Out - Per Coin",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI - Market Brief",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI - Market Brief",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out - Per Coin": {
+      "main": [
+        [
+          {
+            "node": "Filter - Actionable Only",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter - Actionable Only": {
+      "main": [
+        [
+          {
+            "node": "Aggregate - Actionable",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate - Actionable": {
+      "main": [
+        [
+          {
+            "node": "Code - Final Digest",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "33b25982-cdbd-4c6e-a610-a0ba9906b4d0",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "928fd28b10ec34d5af321047ea79a10cb7d59840869ecdfe549a05027c71692c"
+  },
+  "nodeGroups": [],
+  "id": "liN31ueQt10U8ZAK",
+  "tags": []
+}
